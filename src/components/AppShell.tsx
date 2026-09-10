@@ -82,7 +82,7 @@ export function AppShell() {
     setReferencePrediction({
       object: "switch-plate", label: referencePresets["switch-plate"].label,
       referenceHeightCm: referencePresets["switch-plate"].heightCm,
-      calibrationOffsetCm: 2,
+      calibrationOffsetCm: 4,
       confidence: .7, detected: false, windowHeightCm: 0,
       referenceBox: { x: Math.min(.92, maxX + .04), y: Math.max(.02, centerY - .055), width: .045, height: .11 },
     });

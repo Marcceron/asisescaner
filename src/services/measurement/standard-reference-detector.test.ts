@@ -11,11 +11,11 @@ describe("inferWindowHeightFromReference", () => {
   });
 
   it("applies the manual offset once without changing the entered height", () => {
-    const reference = { referenceHeightCm: 10, calibrationOffsetCm: 2 };
-    expect(inferWindowHeightFromReference(500, 50, reference.referenceHeightCm, reference.calibrationOffsetCm)).toBe(120);
-    expect(inferWindowHeightFromReference(500, 50, reference.referenceHeightCm, reference.calibrationOffsetCm)).toBe(120);
+    const reference = { referenceHeightCm: 10, calibrationOffsetCm: 4 };
+    expect(inferWindowHeightFromReference(500, 50, reference.referenceHeightCm, reference.calibrationOffsetCm)).toBe(140);
+    expect(inferWindowHeightFromReference(500, 50, reference.referenceHeightCm, reference.calibrationOffsetCm)).toBe(140);
     expect(reference.referenceHeightCm).toBe(10);
     expect(inferWindowHeightFromReference(500, 50, 10)).toBe(100);
-    expect(inferWindowHeightFromReference(500, 50, 0, 2)).toBeNull();
+    expect(inferWindowHeightFromReference(500, 50, 0, 4)).toBeNull();
   });
 });
