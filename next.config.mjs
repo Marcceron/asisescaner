@@ -1,6 +1,7 @@
-import type { NextConfig } from "next";
+// @ts-check
 
-const nextConfig: NextConfig = {
+/** @type {import("next").NextConfig} */
+const nextConfig = {
   reactStrictMode: true,
   turbopack: { root: process.cwd() },
   allowedDevOrigins: ["127.0.0.1", "localhost"],
