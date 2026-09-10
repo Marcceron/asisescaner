@@ -1,3 +1,5 @@
+import type { FabricPattern, MaterialKind } from "@/data/materials";
+
 export type Point = { x: number; y: number };
 
 export type DetectionSource = "automatic" | "manual";
@@ -27,7 +29,8 @@ export type Product = {
   active: boolean;
   order: number;
   tone?: string;
-  material?: "metal" | "wood" | "plastic";
+  material?: MaterialKind;
+  pattern?: FabricPattern;
   renderStyle?: "wave" | "blackout" | "sheer" | "roller" | "rod" | "bracket" | "finial" | "hook" | "wand";
   /** Optional optimized GLB/glTF file for the perspective renderer. */
   modelUrl?: string;

@@ -1,6 +1,8 @@
 import type { Product } from "@/domain/types";
+import { expandedProducts } from "./expanded-catalog";
 
 export const products: Product[] = [
+  ...expandedProducts,
   ...(["ganchos", "remates", "varillas"] as const).flatMap((category) =>
     (["metal", "wood", "plastic"] as const).map((material, index): Product => ({
       id: `${category}-${material}`,

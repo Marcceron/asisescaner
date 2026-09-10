@@ -77,7 +77,8 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
           if (existing) {
             return { selectedItems: state.selectedItems.filter((item) => item.productId !== productId) };
           }
-          const next = state.selectedItems.filter((item) => category === "ganchos" || category === "varillas" || item.category !== category);
+          // The editor renders one design per category; switching finish must replace it.
+          const next = state.selectedItems.filter((item) => item.category !== category);
           return { selectedItems: [...next, { productId, quantity: 1, category }] };
         }),
       removeProduct: (productId) =>

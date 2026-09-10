@@ -1,0 +1,57 @@
+{
+  "generator": "Built-in image_gen",
+  "images": [
+    {
+      "image": "public/assets/catalog/hook-brass.webp",
+      "prompt": "Use case: product-mockup. Generate one photorealistic square e-commerce thumbnail: a single curtain ring with a small curved J hook attached below it, simple circular torus ring, brushed brass metal, plain warm light gray studio background, soft contact shadow, physically realistic polished edge highlights, straight-on slightly three-quarter camera, centered entire object fills 70% of frame. No extra hardware, no curtain, no text, no watermark. Geometry must be simple circular ring and single bent J wire below. This will represent a matching low-poly 3D curtain hook in a web configurator."
+    },
+    {
+      "image": "public/assets/catalog/hook-walnut.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: a single circular torus curtain ring with a thin curved J hook attached below, walnut wood with dark brown visible grain. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/rod-brass.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: a single straight uniform diameter cylindrical curtain tube, brushed golden brass, no supports no finials no rings. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/rod-walnut.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: a single straight uniform diameter cylindrical curtain tube, walnut wood with dark brown visible grain, no supports no finials no rings. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/bracket-brass.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: a single curtain wall bracket: a short narrow rectangular vertical stem with a simple open U semicircular cradle at its top, brushed golden brass, no tube. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/bracket-walnut.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: a single curtain wall bracket: a short narrow rectangular vertical stem with a simple open U semicircular cradle at its top, walnut wood with dark brown grain, no tube. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/finial-brass.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: a pair of simple perfectly spherical curtain rod finials, brushed golden brass, pure spheres, no ornate details no rod. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/finial-walnut.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: a pair of simple perfectly spherical curtain rod finials, dark walnut wood visible grain, pure spheres, no ornate details no rod. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/wand-brass.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: a single long thin straight cylindrical curtain draw wand with a thicker short cylindrical handle at bottom and small open circular hook at top, brushed golden brass. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/wand-walnut.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: a single long thin straight cylindrical curtain draw wand with a thicker short cylindrical handle at bottom and small open circular hook at top, walnut wood with dark brown grain. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/curtain-stripes.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: two hanging full length pleated cotton curtain panels, ivory base with alternating thin vertical terracotta stripes, front view, slight central split, no tiebacks no hardware visible. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/curtain-grid.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: two hanging full length pleated jacquard curtain panels, ivory base with thin sage green square grid pattern, front view, slight central split, no tiebacks no hardware visible. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    },
+    {
+      "image": "public/assets/catalog/curtain-dots.webp",
+      "prompt": "Use case: product-mockup. Asset: one square photorealistic e-commerce catalog thumbnail. Subject: two hanging full length pleated linen curtain panels, ivory base with evenly spaced small indigo blue polka dots, front view, slight central split, no tiebacks no hardware visible. Match these exact simple geometries, designed to correspond to a lightweight procedural 3D model. Entire object fully visible centered with generous 12% margins, studio warm light gray seamless background, soft shadow, realistic surface texture and highlights. No text, no logos, no labels, no collage, no unrelated objects. For slender rods and wands use diagonal orientation to fill the square. For curtains show full length with visibly readable pattern."
+    }
+  ]
+}
