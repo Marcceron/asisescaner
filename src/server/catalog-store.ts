@@ -5,12 +5,25 @@ import { categoryLabels, products } from "@/data/catalog";
 import type { Product } from "@/domain/types";
 
 export type CatalogCategory = { id: string; label: string; order: number };
-export type CatalogData = { categories: CatalogCategory[]; products: Product[] };
+export type CatalogData = { categories: CatalogCategory[]; products: Product[]; accessoryCatalogVersion?: number };
 const filePath = path.join(process.cwd(), "data", "admin-catalog.json");
 
 export async function readCatalog(): Promise<CatalogData> {
-  try { return JSON.parse(await readFile(filePath, "utf8")) as CatalogData; }
-  catch { return { categories: Object.entries(categoryLabels).map(([id, label], order) => ({ id, label, order })), products }; }
+  let catalog: CatalogData;
+  try { catalog = JSON.parse(await readFile(filePath, "utf8")) as CatalogData; }
+  catch { return { categories: Object.entries(categoryLabels).map(([id, label], order) => ({ id, label, order })), products, accessoryCatalogVersion: 1 }; }
+  if (!catalog.accessoryCatalogVersion) {
+    // Import the new defaults once, preserving administrator edits and later deletions.
+    for (const product of products.filter((item) => item.material)) {
+      if (!catalog.products.some((item) => item.id === product.id)) catalog.products.push(product);
+      if (!catalog.categories.some((item) => item.id === product.category)) {
+        catalog.categories.push({ id: product.category, label: categoryLabels[product.category as keyof typeof categoryLabels], order: catalog.categories.length });
+      }
+    }
+    catalog.accessoryCatalogVersion = 1;
+    await writeCatalog(catalog);
+  }
+  return catalog;
 }
 
 export async function writeCatalog(catalog: CatalogData) {

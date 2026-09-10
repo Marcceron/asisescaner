@@ -38,8 +38,11 @@ export async function POST(request: Request) {
     try {
       const imageUrl = image instanceof File && image.size ? await save(image, [".png", ".jpg", ".jpeg", ".webp"]) : "/assets/product-white.png";
       const modelUrl = model instanceof File && model.size ? await save(model, [".glb", ".gltf"]) : undefined;
-      const renderStyle = String(form.get("renderStyle") ?? "wave") as "wave" | "blackout" | "sheer" | "roller" | "rod" | "bracket" | "finial";
-      catalog.products.push({ id: `${slug(name)}-${Date.now().toString(36)}`, category, name, description: String(form.get("description") ?? ""), priceCents: Math.round(Number(form.get("price") ?? 0) * 100), currency: "MXN", image: imageUrl, modelUrl, renderStyle, compatibleWith: [], active: true, order: catalog.products.length });
+      const renderStyle = String(form.get("renderStyle") ?? "wave") as "wave" | "blackout" | "sheer" | "roller" | "rod" | "bracket" | "finial" | "hook" | "wand";
+      const rawMaterial = form.get("material");
+      const material = rawMaterial === "wood" || rawMaterial === "plastic" ? rawMaterial : "metal";
+      const tone = material === "wood" ? "#ac7543" : material === "plastic" ? "#eee9df" : "#8b949e";
+      catalog.products.push({ id: `${slug(name)}-${Date.now().toString(36)}`, category, name, description: String(form.get("description") ?? ""), priceCents: Math.round(Number(form.get("price") ?? 0) * 100), currency: "MXN", image: imageUrl, modelUrl, renderStyle, material, tone, compatibleWith: [], active: true, order: catalog.products.length });
     } catch (error) { return Response.json({ error: error instanceof Error ? error.message : "No se pudo guardar" }, { status: 400 }); }
   } else return Response.json({ error: "Acción inválida" }, { status: 400 });
   await writeCatalog(catalog); return Response.json(catalog);

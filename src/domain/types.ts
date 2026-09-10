@@ -27,7 +27,8 @@ export type Product = {
   active: boolean;
   order: number;
   tone?: string;
-  renderStyle?: "wave" | "blackout" | "sheer" | "roller" | "rod" | "bracket" | "finial";
+  material?: "metal" | "wood" | "plastic";
+  renderStyle?: "wave" | "blackout" | "sheer" | "roller" | "rod" | "bracket" | "finial" | "hook" | "wand";
   /** Optional optimized GLB/glTF file for the perspective renderer. */
   modelUrl?: string;
 };

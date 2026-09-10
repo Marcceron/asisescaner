@@ -1,6 +1,19 @@
 import type { Product } from "@/domain/types";
 
 export const products: Product[] = [
+  ...(["ganchos", "remates", "varillas"] as const).flatMap((category) =>
+    (["metal", "wood", "plastic"] as const).map((material, index): Product => ({
+      id: `${category}-${material}`,
+      category,
+      name: `${{ ganchos: "Gancho", remates: "Remate", varillas: "Varilla" }[category]} de ${{ metal: "metal", wood: "madera", plastic: "plástico" }[material]}`,
+      description: category === "ganchos" ? "Argolla con gancho · pieza individual" : category === "remates" ? "Par de terminales esféricos" : "Varilla de apertura manual",
+      priceCents: category === "ganchos" ? 1445 : category === "remates" ? 39000 : 34900,
+      currency: "MXN", active: true, order: index + 10, compatibleWith: [],
+      image: `/assets/${category}.svg`,
+      tone: material === "wood" ? "#ac7543" : material === "plastic" ? "#eee9df" : "#8b949e",
+      material,
+      renderStyle: category === "ganchos" ? "hook" : category === "remates" ? "finial" : "wand",
+    }))),
   {
     id: "curtain-linen-sand",
     category: "cortinas",
