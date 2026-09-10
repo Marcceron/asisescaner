@@ -65,7 +65,7 @@ export function AppShell() {
       distance(polygon[0], polygon[3], imageSize.width, imageSize.height)
       * distance(polygon[1], polygon[2], imageSize.width, imageSize.height),
     );
-    return inferWindowHeightFromReference(windowHeightPx, referencePrediction.referenceBox.height * imageSize.height, referencePrediction.referenceHeightCm);
+    return inferWindowHeightFromReference(windowHeightPx, referencePrediction.referenceBox.height * imageSize.height, referencePrediction.referenceHeightCm, referencePrediction.calibrationOffsetCm);
   }, [imageData, imageSize.height, imageSize.width, polygon, referencePrediction]);
 
   useEffect(() => {
@@ -82,6 +82,7 @@ export function AppShell() {
     setReferencePrediction({
       object: "switch-plate", label: referencePresets["switch-plate"].label,
       referenceHeightCm: referencePresets["switch-plate"].heightCm,
+      calibrationOffsetCm: 2,
       confidence: .7, detected: false, windowHeightCm: 0,
       referenceBox: { x: Math.min(.92, maxX + .04), y: Math.max(.02, centerY - .055), width: .045, height: .11 },
     });

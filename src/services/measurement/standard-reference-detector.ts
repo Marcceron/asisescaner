@@ -6,6 +6,8 @@ export type StandardReferencePrediction = {
   label: string;
   confidence: number;
   referenceHeightCm: number;
+  /** Internal calibration offset; never changes the entered reference height. */
+  calibrationOffsetCm?: number;
   detected: boolean;
   windowHeightCm: number;
   referenceBox: { x: number; y: number; width: number; height: number };
@@ -22,9 +24,11 @@ export const referencePresets: Record<ReferenceKind, { label: string; heightCm: 
 
 const SWITCH_PLATE_HEIGHT_CM = 11.4;
 
-export function inferWindowHeightFromReference(windowHeightPx: number, referenceHeightPx: number, referenceHeightCm: number) {
+export function inferWindowHeightFromReference(windowHeightPx: number, referenceHeightPx: number, referenceHeightCm: number, calibrationOffsetCm = 0) {
   if (windowHeightPx <= 0 || referenceHeightPx <= 0 || referenceHeightCm <= 0) return null;
-  const result = windowHeightPx * referenceHeightCm / referenceHeightPx;
+  const effectiveHeightCm = referenceHeightCm + calibrationOffsetCm;
+  if (effectiveHeightCm <= 0) return null;
+  const result = windowHeightPx * effectiveHeightCm / referenceHeightPx;
   return Number.isFinite(result) ? Math.round(result * 10) / 10 : null;
 }
 

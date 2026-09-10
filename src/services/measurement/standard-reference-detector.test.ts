@@ -9,4 +9,13 @@ describe("inferWindowHeightFromReference", () => {
   it("rejects invalid reference geometry", () => {
     expect(inferWindowHeightFromReference(1000, 0, 11.4)).toBeNull();
   });
+
+  it("applies the manual offset once without changing the entered height", () => {
+    const reference = { referenceHeightCm: 10, calibrationOffsetCm: 2 };
+    expect(inferWindowHeightFromReference(500, 50, reference.referenceHeightCm, reference.calibrationOffsetCm)).toBe(120);
+    expect(inferWindowHeightFromReference(500, 50, reference.referenceHeightCm, reference.calibrationOffsetCm)).toBe(120);
+    expect(reference.referenceHeightCm).toBe(10);
+    expect(inferWindowHeightFromReference(500, 50, 10)).toBe(100);
+    expect(inferWindowHeightFromReference(500, 50, 0, 2)).toBeNull();
+  });
 });
