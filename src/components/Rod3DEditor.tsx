@@ -192,7 +192,15 @@ export function Rod3DEditor({ imageData, layerOrder, polygon, rod, curtain, brac
         const width = Math.max(1, target.clientWidth); const height = Math.max(1, target.clientHeight); const aspect = width / height;
         renderer.setSize(width, height, false); camera.left = -aspect; camera.right = aspect; camera.top = 1; camera.bottom = -1; camera.updateProjectionMatrix();
         shadowCatcher.scale.set(aspect, 1, 1);
-        const point = (value: Point) => new THREE.Vector3((value.x - .5) * 2 * aspect, (.5 - value.y) * 2, .08);
+        const imageBounds = target.parentElement?.getBoundingClientRect() ?? target.getBoundingClientRect();
+        const editorBounds = target.getBoundingClientRect();
+        const imageLeft = imageBounds.left - editorBounds.left;
+        const imageTop = imageBounds.top - editorBounds.top;
+        const point = (value: Point) => {
+          const x = imageLeft + value.x * imageBounds.width;
+          const y = imageTop + value.y * imageBounds.height;
+          return new THREE.Vector3((x / width * 2 - 1) * aspect, 1 - y / height * 2, .08);
+        };
         const tl = point(topLeft); const tr = point(topRight);
         const topCenter = tl.clone().add(tr).multiplyScalar(.5);
         const windowWidth = tl.distanceTo(tr); const angle = Math.atan2(tr.y - tl.y, tr.x - tl.x);
