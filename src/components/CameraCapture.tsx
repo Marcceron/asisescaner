@@ -15,6 +15,20 @@ type Props = {
   onCapture: (dataUrl: string, size: { width: number; height: number }, demo?: boolean) => void;
 };
 
+function cameraErrorMessage(error: unknown) {
+  const name = error instanceof DOMException ? error.name : "";
+  if (name === "NotAllowedError" || name === "SecurityError") {
+    return "El navegador bloqueó la cámara. Permite el acceso en la configuración del sitio e inténtalo de nuevo.";
+  }
+  if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+    return "No encontramos una cámara disponible en este dispositivo. Puedes cargar una fotografía.";
+  }
+  if (name === "NotReadableError" || name === "TrackStartError") {
+    return "Otra aplicación está usando la cámara. Ciérrala e inténtalo de nuevo.";
+  }
+  return "No pudimos abrir la cámara. Revisa el permiso o carga una fotografía.";
+}
+
 export function CameraCapture({ open, onClose, onCapture }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -48,6 +62,11 @@ export function CameraCapture({ open, onClose, onCapture }: Props) {
   }
 
   async function startCamera() {
+    if (!window.isSecureContext) {
+      setStatus("error");
+      setMessage("La cámara requiere una conexión segura HTTPS. Puedes cargar una fotografía.");
+      return;
+    }
     if (!navigator.mediaDevices?.getUserMedia) {
       setStatus("error");
       setMessage("Este navegador no ofrece acceso a cámara. Puedes cargar una fotografía.");
@@ -56,14 +75,24 @@ export function CameraCapture({ open, onClose, onCapture }: Props) {
     try {
       setStatus("requesting");
       setMessage("");
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
-      });
+      stopCamera();
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: false,
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } },
+        });
+      } catch (error) {
+        const name = error instanceof DOMException ? error.name : "";
+        if (name !== "OverconstrainedError" && name !== "ConstraintNotSatisfiedError") throw error;
+        stream = await navigator.mediaDevices.getUserMedia({ audio: false, video: true });
+      }
       streamRef.current = stream;
       const track = stream.getVideoTracks()[0] as ZoomTrack;
-      const capabilities = track.getCapabilities() as MediaTrackCapabilities & { zoom?: ZoomRange };
-      const range = capabilities.zoom;
+      const capabilities = typeof track.getCapabilities === "function"
+        ? track.getCapabilities() as MediaTrackCapabilities & { zoom?: ZoomRange }
+        : undefined;
+      const range = capabilities?.zoom;
       if (range && Number.isFinite(range.min) && Number.isFinite(range.max) && range.max > range.min) {
         setZoomRange(range);
         setZoom(track.getSettings?.().zoom ?? range.min);
@@ -73,9 +102,10 @@ export function CameraCapture({ open, onClose, onCapture }: Props) {
         await videoRef.current.play();
       }
       setStatus("ready");
-    } catch {
+    } catch (error) {
+      stopCamera();
       setStatus("error");
-      setMessage("No pudimos abrir la cámara. Revisa el permiso o carga una fotografía.");
+      setMessage(cameraErrorMessage(error));
     }
   }
 

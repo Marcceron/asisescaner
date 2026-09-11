@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Object3D } from "three";
 import type { Point, Product } from "@/domain/types";
 import { projectIntoQuadrilateral } from "@/services/visualization/perspective";
+import { createSurfaceMaterial, disposeSurfaceMaterial } from "@/services/visualization/surface-material";
 
 type TransformMode = "translate" | "rotate" | "scale";
 type PartId = "hook" | "wand" | "curtain" | "tube" | "bracket-left" | "bracket-right" | "finial-left" | "finial-right";
@@ -44,12 +45,13 @@ export function Rod3DEditor({ polygon, rod, curtain, bracket, finial, hook, wand
     const host = hostRef.current;
     if (!host) return;
     const target = host; let disposed = false; let cleanup = () => {};
-    void Promise.all([import("three"), import("three/examples/jsm/controls/TransformControls.js"), import("@/services/visualization/surface-material")]).then(([THREE, { TransformControls }, { createSurfaceMaterial, disposeSurfaceMaterial }]) => {
+    void Promise.all([import("three"), import("three/examples/jsm/controls/TransformControls.js")]).then(([THREE, { TransformControls }]) => {
       if (disposed) return;
       const scene = new THREE.Scene();
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -20, 20); camera.position.set(0, 0, 8);
       const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.setClearColor(0x000000, 0);
+      renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.domElement.className = "rod3dCanvas"; renderer.domElement.setAttribute("aria-label", "Editor de componentes 3D"); target.appendChild(renderer.domElement);
       scene.add(new THREE.HemisphereLight(0xffffff, 0x40382f, 2.3));
       const light = new THREE.DirectionalLight(0xffffff, 3); light.position.set(-2, 3, 5); scene.add(light);
