@@ -7,10 +7,11 @@ import type { Point, Product } from "@/domain/types";
 import { projectIntoQuadrilateral } from "@/services/visualization/perspective";
 import { createSurfaceMaterial, disposeSurfaceMaterial } from "@/services/visualization/surface-material";
 import { calculateCurtainDrape } from "@/services/visualization/curtain-drape";
+import { estimateSceneLighting } from "@/services/visualization/scene-lighting";
 
 type TransformMode = "translate" | "rotate" | "scale";
 type PartId = "hook" | "wand" | "curtain" | "tube" | "bracket-left" | "bracket-right" | "finial-left" | "finial-right";
-export type RodEditorProps = { polygon: [Point, Point, Point, Point]; hook?: Product; wand?: Product; rod?: Product; curtain?: Product; bracket?: Product; finial?: Product; onDeleteHook: () => void; onDeleteWand: () => void; onDeleteRod: () => void; onDeleteCurtain: () => void; onDeleteBracket: () => void; onDeleteFinial: () => void };
+export type RodEditorProps = { imageData: string; polygon: [Point, Point, Point, Point]; hook?: Product; wand?: Product; rod?: Product; curtain?: Product; bracket?: Product; finial?: Product; onDeleteHook: () => void; onDeleteWand: () => void; onDeleteRod: () => void; onDeleteCurtain: () => void; onDeleteBracket: () => void; onDeleteFinial: () => void };
 
 const labels: Record<PartId, string> = {
   hook: "Gancho", wand: "Varilla",
@@ -18,7 +19,7 @@ const labels: Record<PartId, string> = {
   "bracket-right": "Soporte derecho", "finial-left": "Remate izquierdo", "finial-right": "Remate derecho",
 };
 
-export function Rod3DEditor({ polygon, rod, curtain, bracket, finial, hook, wand, onDeleteHook, onDeleteWand, onDeleteRod, onDeleteCurtain, onDeleteBracket, onDeleteFinial }: RodEditorProps) {
+export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial, hook, wand, onDeleteHook, onDeleteWand, onDeleteRod, onDeleteCurtain, onDeleteBracket, onDeleteFinial }: RodEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const modeRef = useRef<TransformMode>("translate");
   const selectPartRef = useRef<(part: PartId) => void>(() => {});
@@ -48,16 +49,23 @@ export function Rod3DEditor({ polygon, rod, curtain, bracket, finial, hook, wand
     const host = hostRef.current;
     if (!host) return;
     const target = host; let disposed = false; let cleanup = () => {};
-    void Promise.all([import("three"), import("three/examples/jsm/controls/TransformControls.js")]).then(([THREE, { TransformControls }]) => {
+    void Promise.all([import("three"), import("three/examples/jsm/controls/TransformControls.js"), import("three/examples/jsm/environments/RoomEnvironment.js"), estimateSceneLighting(imageData)]).then(([THREE, { TransformControls }, { RoomEnvironment }, lighting]) => {
       if (disposed) return;
       const scene = new THREE.Scene();
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -20, 20); camera.position.set(0, 0, 8);
       const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.setClearColor(0x000000, 0);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
+      renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = .86;
       renderer.domElement.className = "rod3dCanvas"; renderer.domElement.setAttribute("aria-label", "Editor de componentes 3D"); target.appendChild(renderer.domElement);
-      scene.add(new THREE.HemisphereLight(0xffffff, 0x40382f, 2.3));
-      const light = new THREE.DirectionalLight(0xffffff, 3); light.position.set(-2, 3, 5); scene.add(light);
+      const environmentScene = new RoomEnvironment(); const pmrem = new THREE.PMREMGenerator(renderer);
+      const environmentMap = pmrem.fromScene(environmentScene, .035).texture; scene.environment = environmentMap;
+      scene.add(new THREE.HemisphereLight(lighting.ambientColor, 0x302a25, lighting.ambientIntensity));
+      const light = new THREE.DirectionalLight(lighting.keyColor, lighting.keyIntensity);
+      const keyX = Math.abs(lighting.directionX) < .28 ? (lighting.directionX < 0 ? -.28 : .28) : lighting.directionX;
+      light.position.set(keyX * 5, lighting.directionY * 3.5, 3); scene.add(light);
+      const fill = new THREE.DirectionalLight(lighting.ambientColor, .12);
+      fill.position.set(-lighting.directionX * 3, -lighting.directionY * 2, 3); scene.add(fill);
       const rodMaterial = createSurfaceMaterial(rod);
       const hookMaterial = createSurfaceMaterial(hook);
       const wandMaterial = createSurfaceMaterial(wand);
@@ -217,10 +225,10 @@ export function Rod3DEditor({ polygon, rod, curtain, bracket, finial, hook, wand
       };
       renderer.domElement.addEventListener("pointerdown", onDown);
       let frame = 0; const render = () => { frame = requestAnimationFrame(render); controls.setMode(modeRef.current); renderer.render(scene, camera); }; render();
-      cleanup = () => { cancelAnimationFrame(frame); resize.disconnect(); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", onDown); scene.traverse((object) => { if (object instanceof THREE.Mesh) object.geometry.dispose(); }); [rodMaterial, hookMaterial, wandMaterial, finialMaterial, bracketMaterial, curtainMaterial].forEach(disposeSurfaceMaterial); renderer.dispose(); renderer.domElement.remove(); };
+      cleanup = () => { cancelAnimationFrame(frame); resize.disconnect(); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", onDown); scene.traverse((object) => { if (object instanceof THREE.Mesh) object.geometry.dispose(); }); [rodMaterial, hookMaterial, wandMaterial, finialMaterial, bracketMaterial, curtainMaterial].forEach(disposeSurfaceMaterial); environmentMap.dispose(); environmentScene.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); };
     });
     return () => { disposed = true; cleanup(); };
-  }, [bracketId, curtainId, curtainStyle, finialId, polygon, rodId, hook, wand, finial, rod, bracket, curtain]);
+  }, [bracketId, curtainId, curtainStyle, finialId, imageData, polygon, rodId, hook, wand, finial, rod, bracket, curtain]);
 
   const selectedKind = selectedPart === "hook" || selectedPart === "wand" ? selectedPart : selectedPart === "curtain" ? "curtain" : selectedPart === "tube" ? "rod" : selectedPart.startsWith("bracket") ? "bracket" : "finial";
   const deleteSelected = { hook: onDeleteHook, wand: onDeleteWand, curtain: onDeleteCurtain, rod: onDeleteRod, bracket: onDeleteBracket, finial: onDeleteFinial }[selectedKind];
