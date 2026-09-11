@@ -182,6 +182,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .modePill { top: 20px; left: calc(50% + 187px); translate: -50%; gap: 6px; padding: 5px 6px 5px 14px; font-size: 14px; font-weight: 600; }
 .modePill button { display: grid; width: 38px; height: 38px; padding: 0; place-items: center; border: 0; border-radius: 11px; background: transparent; cursor: pointer; }
 .modePill button.active { background: var(--blue); }
+.modePill button:disabled { opacity: .3; cursor: not-allowed; }
+.modePill .historyButton span { font-size: 24px; font-weight: 400; line-height: 1; }
 .modePill img { object-fit: contain; }
 .modePill button:not(.active) img { filter: grayscale(1); opacity: .7; }
 .floatingTools { right: 22px; top: 50%; translate: 0 -50%; flex-direction: column; gap: 8px; padding: 5px; }
@@ -195,9 +197,15 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .summaryBar { position: absolute; left: 375px; right: 0; bottom: 0; height: 78px; z-index: 10; display: flex; align-items: center; min-width: 0; background: var(--panel); backdrop-filter: blur(32px); border-top: 1px solid var(--line); }
 .selectionSummary { display: flex; min-width: 0; flex: 1; align-items: center; gap: 20px; padding: 12px 20px; }
 .selectionSummary > span, .total > span { font-size: 14px; font-weight: 600; }
+.selectionSummary > span { display: flex; flex-direction: column; white-space: nowrap; }
+.selectionSummary > span small { color: var(--muted); font-size: 10px; font-weight: 400; }
 .selectionItems { display: flex; min-width: 0; gap: 10px; overflow-x: auto; }
 .selectionItems small { color: var(--muted); }
-.selectionThumbnail { position: relative; flex: 0 0 auto; width: 42px; height: 42px; border-radius: var(--radius-sm); background: #444; }
+.selectionThumbnail { position: relative; flex: 0 0 auto; width: 42px; height: 42px; border-radius: var(--radius-sm); background: #444; cursor: grab; touch-action: none; transition: opacity .15s, transform .15s, box-shadow .15s; }
+.selectionThumbnail:active { cursor: grabbing; }
+.selectionThumbnail:focus-visible { outline: 3px solid rgba(74,158,255,.9); outline-offset: 2px; }
+.selectionThumbnail.dragging { opacity: .4; transform: scale(.92); }
+.selectionThumbnail:hover { box-shadow: 0 0 0 2px rgba(255,255,255,.28); }
 .selectionThumbnail > img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .selectionThumbnail > button { position: absolute; top: 2px; right: 2px; display: grid; width: 16px; height: 16px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: white; background: var(--danger); box-shadow: 0 1px 4px rgba(0,0,0,.45); font-size: 12px; line-height: 1; cursor: pointer; }
 .total { align-self: stretch; display: flex; align-items: center; gap: 18px; padding: 12px 20px; border-left: 1px solid var(--line); }

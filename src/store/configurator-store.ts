@@ -18,6 +18,8 @@ type ConfiguratorState = {
   measurement: Measurement;
   activeCategory: ProductCategory;
   selectedItems: SelectedItem[];
+  selectionPast: SelectedItem[][];
+  selectionFuture: SelectedItem[][];
   setImage: (imageData: string | null, size?: { width: number; height: number }) => void;
   setPolygon: (polygon: [Point, Point, Point, Point]) => void;
   setPolygonPoint: (index: number, point: Point) => void;
@@ -26,6 +28,9 @@ type ConfiguratorState = {
   setActiveCategory: (category: ProductCategory) => void;
   toggleProduct: (productId: string, category: ProductCategory) => void;
   removeProduct: (productId: string) => void;
+  reorderSelectedItem: (productId: string, targetProductId: string) => void;
+  undoSelection: () => void;
+  redoSelection: () => void;
   resetProject: () => void;
 };
 
@@ -50,6 +55,8 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
       measurement: emptyMeasurement,
       activeCategory: "cortinas",
       selectedItems: [],
+      selectionPast: [],
+      selectionFuture: [],
       setImage: (imageData, size) =>
         set({
           imageData,
@@ -75,14 +82,48 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
         set((state) => {
           const existing = state.selectedItems.find((item) => item.productId === productId);
           if (existing) {
-            return { selectedItems: state.selectedItems.filter((item) => item.productId !== productId) };
+            return {
+              selectedItems: state.selectedItems.filter((item) => item.productId !== productId),
+              selectionPast: [...state.selectionPast, state.selectedItems].slice(-40), selectionFuture: [],
+            };
           }
           // The editor renders one design per category; switching finish must replace it.
           const next = state.selectedItems.filter((item) => item.category !== category);
-          return { selectedItems: [...next, { productId, quantity: 1, category }] };
+          return {
+            selectedItems: [...next, { productId, quantity: 1, category }],
+            selectionPast: [...state.selectionPast, state.selectedItems].slice(-40), selectionFuture: [],
+          };
         }),
       removeProduct: (productId) =>
-        set((state) => ({ selectedItems: state.selectedItems.filter((item) => item.productId !== productId) })),
+        set((state) => ({
+          selectedItems: state.selectedItems.filter((item) => item.productId !== productId),
+          selectionPast: [...state.selectionPast, state.selectedItems].slice(-40), selectionFuture: [],
+        })),
+      reorderSelectedItem: (productId, targetProductId) =>
+        set((state) => {
+          const from = state.selectedItems.findIndex((item) => item.productId === productId);
+          const to = state.selectedItems.findIndex((item) => item.productId === targetProductId);
+          if (from < 0 || to < 0 || from === to) return state;
+          const selectedItems = [...state.selectedItems];
+          const [moved] = selectedItems.splice(from, 1); selectedItems.splice(to, 0, moved);
+          return { selectedItems, selectionPast: [...state.selectionPast, state.selectedItems].slice(-40), selectionFuture: [] };
+        }),
+      undoSelection: () =>
+        set((state) => {
+          const previous = state.selectionPast.at(-1); if (!previous) return state;
+          return {
+            selectedItems: previous, selectionPast: state.selectionPast.slice(0, -1),
+            selectionFuture: [state.selectedItems, ...state.selectionFuture].slice(0, 40),
+          };
+        }),
+      redoSelection: () =>
+        set((state) => {
+          const next = state.selectionFuture[0]; if (!next) return state;
+          return {
+            selectedItems: next, selectionPast: [...state.selectionPast, state.selectedItems].slice(-40),
+            selectionFuture: state.selectionFuture.slice(1),
+          };
+        }),
       resetProject: () =>
         set({
           imageData: null,
@@ -90,6 +131,8 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
           polygon: initialPolygon,
           measurement: emptyMeasurement,
           selectedItems: [],
+          selectionPast: [],
+          selectionFuture: [],
           activeCategory: "cortinas",
         }),
     }),

@@ -11,7 +11,7 @@ import { estimateSceneLighting } from "@/services/visualization/scene-lighting";
 
 type TransformMode = "translate" | "rotate" | "scale";
 type PartId = "hook" | "wand" | "curtain" | "tube" | "bracket-left" | "bracket-right" | "finial-left" | "finial-right";
-export type RodEditorProps = { imageData: string; polygon: [Point, Point, Point, Point]; hook?: Product; wand?: Product; rod?: Product; curtain?: Product; bracket?: Product; finial?: Product; onDeleteHook: () => void; onDeleteWand: () => void; onDeleteRod: () => void; onDeleteCurtain: () => void; onDeleteBracket: () => void; onDeleteFinial: () => void };
+export type RodEditorProps = { imageData: string; layerOrder: string[]; polygon: [Point, Point, Point, Point]; hook?: Product; wand?: Product; rod?: Product; curtain?: Product; bracket?: Product; finial?: Product; onDeleteHook: () => void; onDeleteWand: () => void; onDeleteRod: () => void; onDeleteCurtain: () => void; onDeleteBracket: () => void; onDeleteFinial: () => void };
 
 const labels: Record<PartId, string> = {
   hook: "Gancho", wand: "Varilla",
@@ -19,7 +19,7 @@ const labels: Record<PartId, string> = {
   "bracket-right": "Soporte derecho", "finial-left": "Remate izquierdo", "finial-right": "Remate derecho",
 };
 
-export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial, hook, wand, onDeleteHook, onDeleteWand, onDeleteRod, onDeleteCurtain, onDeleteBracket, onDeleteFinial }: RodEditorProps) {
+export function Rod3DEditor({ imageData, layerOrder, polygon, rod, curtain, bracket, finial, hook, wand, onDeleteHook, onDeleteWand, onDeleteRod, onDeleteCurtain, onDeleteBracket, onDeleteFinial }: RodEditorProps) {
   const hostRef = useRef<HTMLDivElement>(null);
   const modeRef = useRef<TransformMode>("translate");
   const selectPartRef = useRef<(part: PartId) => void>(() => {});
@@ -32,6 +32,7 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
   const finialId = finial?.id;
   const curtainId = curtain?.id;
   const curtainStyle = curtain?.renderStyle;
+  const layerOrderKey = layerOrder.join("|");
 
   useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { selectedPartRef.current = selectedPart; }, [selectedPart]);
@@ -49,6 +50,7 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
     const host = hostRef.current;
     if (!host) return;
     const target = host; let disposed = false; let cleanup = () => {};
+    const orderedLayers = layerOrderKey ? layerOrderKey.split("|") : [];
     void Promise.all([import("three"), import("three/examples/jsm/controls/TransformControls.js"), import("three/examples/jsm/environments/RoomEnvironment.js"), estimateSceneLighting(imageData)]).then(([THREE, { TransformControls }, { RoomEnvironment }, lighting]) => {
       if (disposed) return;
       const scene = new THREE.Scene();
@@ -82,9 +84,14 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
       const bracketMaterial = createSurfaceMaterial(bracket);
       const curtainMaterial = createSurfaceMaterial(curtain, true);
       const parts = new Map<PartId, Object3D>();
-      const register = (id: PartId, object: Object3D) => { object.userData.partId = id; parts.set(id, object); scene.add(object); return object; };
+      const layerDepth = (product?: Product) => product ? Math.max(0, orderedLayers.length - 1 - orderedLayers.indexOf(product.id)) * .018 : 0;
+      const register = (id: PartId, object: Object3D, product?: Product) => {
+        object.userData.partId = id; object.userData.layerDepth = layerDepth(product);
+        object.userData.layerRenderOrder = product ? orderedLayers.length - orderedLayers.indexOf(product.id) : 0;
+        parts.set(id, object); scene.add(object); return object;
+      };
       if (hook) {
-        const group = register("hook", new THREE.Group());
+        const group = register("hook", new THREE.Group(), hook);
         if (hook.material === "walnut") group.scale.x = -1;
         group.add(new THREE.Mesh(new THREE.TorusGeometry(.052, .01, 8, 24), hookMaterial));
         const curve = new THREE.CatmullRomCurve3([
@@ -94,7 +101,7 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
         group.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 16, .007, 8, false), hookMaterial));
       }
       if (wand) {
-        const group = register("wand", new THREE.Group());
+        const group = register("wand", new THREE.Group(), wand);
         const shaft = new THREE.Mesh(new THREE.CylinderGeometry(.012, .012, .75, 12), wandMaterial);
         shaft.position.y = -.405; group.add(shaft);
         const grip = new THREE.Mesh(new THREE.CylinderGeometry(.022, .018, .14, 12), wandMaterial);
@@ -103,7 +110,7 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
       }
 
       if (curtainId) {
-        const group = register("curtain", new THREE.Group());
+        const group = register("curtain", new THREE.Group(), curtain);
         const panels = curtainStyle === "roller" ? 1 : 2;
         for (let index = 0; index < panels; index += 1) {
           const geometry = new THREE.PlaneGeometry(1, 1, curtainStyle === "roller" ? 24 : 48, curtainStyle === "roller" ? 18 : 30);
@@ -119,7 +126,7 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
         }
       }
       if (rodId) {
-        const tube = register("tube", new THREE.Group()); tube.rotation.z = Math.PI / 2;
+        const tube = register("tube", new THREE.Group(), rod); tube.rotation.z = Math.PI / 2;
         const hollow = rod?.material === "brass";
         tube.add(new THREE.Mesh(new THREE.CylinderGeometry(.032, .032, 1, 24, 1, hollow), rodMaterial));
         if (hollow) {
@@ -136,7 +143,7 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
       if (finialId) {
         for (const side of ["left", "right"] as const) {
           if (finial?.material === "brass") {
-            const group = register(`finial-${side}`, new THREE.Group());
+            const group = register(`finial-${side}`, new THREE.Group(), finial);
             group.add(new THREE.Mesh(new THREE.SphereGeometry(.07, 22, 14), finialMaterial));
             const collar = new THREE.Mesh(new THREE.CylinderGeometry(.035, .035, .035, 20), finialMaterial);
             collar.rotation.z = Math.PI / 2; collar.position.x = side === "left" ? .072 : -.072;
@@ -144,13 +151,13 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
             continue;
           }
           const geometry = finialId === "finial-cap" ? new THREE.CylinderGeometry(.06, .06, .055, 22) : new THREE.SphereGeometry(.07, 22, 14);
-          const object = register(`finial-${side}`, new THREE.Mesh(geometry, finialMaterial));
+          const object = register(`finial-${side}`, new THREE.Mesh(geometry, finialMaterial), finial);
           if (finialId === "finial-cap") object.rotation.z = Math.PI / 2;
         }
       }
       if (bracketId) {
         for (const side of ["left", "right"] as const) {
-          const support = register(`bracket-${side}`, new THREE.Group());
+          const support = register(`bracket-${side}`, new THREE.Group(), bracket);
           const depth = bracketId === "bracket-wall-deep" ? .26 : .18;
           if (bracket?.material === "brass" || bracket?.material === "walnut") {
             const stemShape = new THREE.Shape();
@@ -193,12 +200,12 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
           const part = parts.get(id);
           if (part) {
             part.position.copy(point(projectIntoQuadrilateral(polygon, u, 0)));
-            part.position.y += .055; part.position.z += .08;
+            part.position.y += .055; part.position.z += .08 + Number(part.userData.layerDepth);
             part.rotation.z = angle;
           }
         }
         const curtainPart = parts.get("curtain");
-        if (curtainPart) curtainPart.children.forEach((child) => {
+        if (curtainPart) { curtainPart.position.z = Number(curtainPart.userData.layerDepth); curtainPart.children.forEach((child) => {
           if (child.name === "curtain-panel" && child instanceof THREE.Mesh) {
             const geometry = child.geometry as InstanceType<typeof THREE.PlaneGeometry>;
             const position = geometry.getAttribute("position"); const uv = geometry.getAttribute("uv");
@@ -214,19 +221,20 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
           } else if (child.name === "roller-cassette") {
             child.position.copy(topCenter); child.rotation.z = Math.PI / 2 + angle; child.scale.set(1, windowWidth, 1);
           }
-        });
-        const tube = parts.get("tube"); if (tube) { tube.position.copy(topCenter).add(new THREE.Vector3(0, .055, .02)); tube.rotation.z = Math.PI / 2 + angle; tube.scale.set(1, windowWidth * 1.1, 1); }
+        }); }
+        const tube = parts.get("tube"); if (tube) { tube.position.copy(topCenter).add(new THREE.Vector3(0, .055, .02 + Number(tube.userData.layerDepth))); tube.rotation.z = Math.PI / 2 + angle; tube.scale.set(1, windowWidth * 1.1, 1); }
         for (const side of ["left", "right"] as const) {
           const sign = side === "left" ? -1 : 1; const anchor = topCenter.clone().add(new THREE.Vector3(Math.cos(angle) * windowWidth * .55 * sign, Math.sin(angle) * windowWidth * .55 * sign + .055, .02));
-          parts.get(`finial-${side}`)?.position.copy(anchor);
+          const positionedFinial = parts.get(`finial-${side}`); positionedFinial?.position.copy(anchor); if (positionedFinial) positionedFinial.position.z += Number(positionedFinial.userData.layerDepth);
           const finialPart = parts.get(`finial-${side}`);
           if (finialPart && finial?.material === "brass") finialPart.rotation.z = angle;
-          const bracket = parts.get(`bracket-${side}`); if (bracket) { bracket.position.copy(topCenter).add(new THREE.Vector3(Math.cos(angle) * windowWidth * .38 * sign, Math.sin(angle) * windowWidth * .38 * sign + .03, 0)); bracket.rotation.z = angle; }
+          const bracket = parts.get(`bracket-${side}`); if (bracket) { bracket.position.copy(topCenter).add(new THREE.Vector3(Math.cos(angle) * windowWidth * .38 * sign, Math.sin(angle) * windowWidth * .38 * sign + .03, Number(bracket.userData.layerDepth))); bracket.rotation.z = angle; }
         }
       }
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh && object !== shadowCatcher && object.name !== "curtain-panel") object.castShadow = true;
       });
+      for (const part of parts.values()) part.traverse((object) => { object.renderOrder = Number(part.userData.layerRenderOrder); });
       layout(); const resize = new ResizeObserver(layout); resize.observe(target);
 
       const raycaster = new THREE.Raycaster(); const pointer = new THREE.Vector2();
@@ -242,7 +250,7 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
       cleanup = () => { cancelAnimationFrame(frame); resize.disconnect(); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", onDown); scene.traverse((object) => { if (object instanceof THREE.Mesh) object.geometry.dispose(); }); [rodMaterial, hookMaterial, wandMaterial, finialMaterial, bracketMaterial, curtainMaterial].forEach(disposeSurfaceMaterial); shadowMaterial.dispose(); environmentMap.dispose(); environmentScene.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); };
     });
     return () => { disposed = true; cleanup(); };
-  }, [bracketId, curtainId, curtainStyle, finialId, imageData, polygon, rodId, hook, wand, finial, rod, bracket, curtain]);
+  }, [bracketId, curtainId, curtainStyle, finialId, imageData, layerOrderKey, polygon, rodId, hook, wand, finial, rod, bracket, curtain]);
 
   const selectedKind = selectedPart === "hook" || selectedPart === "wand" ? selectedPart : selectedPart === "curtain" ? "curtain" : selectedPart === "tube" ? "rod" : selectedPart.startsWith("bracket") ? "bracket" : "finial";
   const deleteSelected = { hook: onDeleteHook, wand: onDeleteWand, curtain: onDeleteCurtain, rod: onDeleteRod, bracket: onDeleteBracket, finial: onDeleteFinial }[selectedKind];

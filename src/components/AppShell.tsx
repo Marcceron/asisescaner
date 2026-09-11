@@ -20,7 +20,7 @@ import { ReferenceOverlay } from "./ReferenceOverlay";
 
 export function AppShell() {
   const store = useConfiguratorStore();
-  const { imageData, imageSize, polygon, setMeasurement } = store;
+  const { imageData, imageSize, polygon, setMeasurement, undoSelection, redoSelection } = store;
   const [cameraOpen, setCameraOpen] = useState(false);
   const [quoteOpen, setQuoteOpen] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
@@ -33,6 +33,7 @@ export function AppShell() {
   const [panOffset, setPanOffset] = useState({ x: 0, y: 0 });
   const [referencePrediction, setReferencePrediction] = useState<StandardReferencePrediction | null>(null);
   const [catalogProducts, setCatalogProducts] = useState<Product[]>(defaultProducts);
+  const [draggedProductId, setDraggedProductId] = useState<string | null>(null);
   const [catalogCategories, setCatalogCategories] = useState(Object.entries(categoryLabels).map(([id, label], order) => ({ id, label, order })));
 
   useEffect(() => {
@@ -42,6 +43,18 @@ export function AppShell() {
       setCatalogCategories(catalog.categories);
     }).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.matches("input, textarea, select, [contenteditable='true']")) return;
+      if (!(event.metaKey || event.ctrlKey) || event.key.toLowerCase() !== "z") return;
+      event.preventDefault();
+      if (event.shiftKey) redoSelection(); else undoSelection();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [redoSelection, undoSelection]);
 
   const selectedProducts = useMemo(
     () => store.selectedItems.flatMap((item) => {
@@ -178,7 +191,7 @@ export function AppShell() {
         {store.imageData ? (
           <>
             <ImagePlane imageData={store.imageData} imageSize={store.imageSize} focusPoint={windowCenter} viewZoom={viewZoom} panEnabled={panEnabled} panOffset={panOffset} onPan={(delta) => setPanOffset((current) => ({ x: current.x + delta.x, y: current.y + delta.y }))}>
-              {workspaceMode === "editing" && <PerspectiveAssetLayer imageData={store.imageData} hook={selectedHook} wand={selectedWand} onDeleteHook={() => { if (selectedHook) store.removeProduct(selectedHook.id); }} onDeleteWand={() => { if (selectedWand) store.removeProduct(selectedWand.id); }} polygon={store.polygon} curtain={selectedCurtain} rod={selectedRod} bracket={selectedBracket} finial={selectedFinial} onDeleteRod={() => { if (selectedRod) store.removeProduct(selectedRod.id); }} onDeleteCurtain={() => { if (selectedCurtain) store.removeProduct(selectedCurtain.id); }} onDeleteBracket={() => { if (selectedBracket) store.removeProduct(selectedBracket.id); }} onDeleteFinial={() => { if (selectedFinial) store.removeProduct(selectedFinial.id); }} />}
+              {workspaceMode === "editing" && <PerspectiveAssetLayer layerOrder={selectedProducts.map((product) => product.id)} imageData={store.imageData} hook={selectedHook} wand={selectedWand} onDeleteHook={() => { if (selectedHook) store.removeProduct(selectedHook.id); }} onDeleteWand={() => { if (selectedWand) store.removeProduct(selectedWand.id); }} polygon={store.polygon} curtain={selectedCurtain} rod={selectedRod} bracket={selectedBracket} finial={selectedFinial} onDeleteRod={() => { if (selectedRod) store.removeProduct(selectedRod.id); }} onDeleteCurtain={() => { if (selectedCurtain) store.removeProduct(selectedCurtain.id); }} onDeleteBracket={() => { if (selectedBracket) store.removeProduct(selectedBracket.id); }} onDeleteFinial={() => { if (selectedFinial) store.removeProduct(selectedFinial.id); }} />}
               {workspaceMode === "measurement" && referencePrediction && <ReferenceOverlay reference={referencePrediction} onChange={(referenceBox) => setReferencePrediction((current) => current && ({ ...current, referenceBox, detected: false }))} />}
               {workspaceMode === "measurement" && <MeasurementOverlay polygon={store.polygon} widthCm={store.measurement.widthCm} heightCm={store.measurement.heightCm} aspectRatio={store.imageSize.width / store.imageSize.height} onPointChange={store.setPolygonPoint} />}
             </ImagePlane>
@@ -186,6 +199,8 @@ export function AppShell() {
               <span>{isDetecting ? "Detectando ventana…" : workspaceMode === "measurement" ? "Modo Medición" : "Modo Edición"}</span>
               <button className={workspaceMode === "measurement" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("measurement"); }} aria-label="Modo Medición" aria-pressed={workspaceMode === "measurement"} title="Ajustar las cuatro esquinas y calcular medidas."><img src="/assets/resize.svg" alt="" width="24" height="24" /></button>
               <button className={workspaceMode === "editing" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("editing"); }} aria-label="Modo Edición" aria-pressed={workspaceMode === "editing"} title="Colocar los assets sobre la ventana."><img src="/assets/edit.svg" alt="" width="18" height="18" /></button>
+              <button className="historyButton" onClick={undoSelection} disabled={!store.selectionPast.length} aria-label="Deshacer" title="Deshacer (⌘/Ctrl+Z)"><span aria-hidden="true">↶</span></button>
+              <button className="historyButton" onClick={redoSelection} disabled={!store.selectionFuture.length} aria-label="Rehacer" title="Rehacer (⌘/Ctrl+Shift+Z)"><span aria-hidden="true">↷</span></button>
             </div>
             <div className="floatingTools" aria-label="Herramientas">
               <button onClick={() => setCameraOpen(true)} aria-label="Tomar otra fotografía"><img src="/assets/camera.svg" alt="" width="28" height="28" /></button>
@@ -211,10 +226,17 @@ export function AppShell() {
       <footer className="summaryBar">
         <button className="mobileCatalogButton" onClick={() => setMobilePanelOpen(true)}>Personalizar</button>
         <div className="selectionSummary">
-          <span>Selección:</span>
-          <div className="selectionItems">
-            {selectedProducts.length ? selectedProducts.map((product) => (
-              <div className="selectionThumbnail" key={product.id}>
+          <span>Capas:<small> izquierda = frente</small></span>
+          <div className="selectionItems" role="list" aria-label="Orden de capas de assets">
+            {selectedProducts.length ? selectedProducts.map((product, index) => (
+              <div className={`selectionThumbnail ${draggedProductId === product.id ? "dragging" : ""}`} key={product.id} draggable
+                role="listitem" tabIndex={0} aria-label={`${product.name}, capa ${index + 1} de ${selectedProducts.length}`}
+                title={`${product.name} · arrastra para ordenar · izquierda = frente`}
+                onDragStart={(event) => { setDraggedProductId(product.id); event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", product.id); }}
+                onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }}
+                onDrop={(event) => { event.preventDefault(); const source = event.dataTransfer.getData("text/plain") || draggedProductId; if (source) store.reorderSelectedItem(source, product.id); setDraggedProductId(null); }}
+                onDragEnd={() => setDraggedProductId(null)}
+                onKeyDown={(event) => { if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return; event.preventDefault(); const target = selectedProducts[index + (event.key === "ArrowLeft" ? -1 : 1)]; if (target) store.reorderSelectedItem(product.id, target.id); }}>
                 <img src={product.image} alt={product.name} />
                 <button onClick={() => store.removeProduct(product.id)} aria-label={`Quitar ${product.name}`}>×</button>
               </div>
