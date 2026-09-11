@@ -8,6 +8,7 @@ import { projectIntoQuadrilateral } from "@/services/visualization/perspective";
 import { createSurfaceMaterial, disposeSurfaceMaterial } from "@/services/visualization/surface-material";
 import { calculateCurtainDrape } from "@/services/visualization/curtain-drape";
 import { estimateSceneLighting } from "@/services/visualization/scene-lighting";
+import { useConfiguratorStore, type AssetTransform } from "@/store/configurator-store";
 
 type TransformMode = "translate" | "rotate" | "scale";
 type PartId = "hook" | "wand" | "curtain" | "tube" | "bracket-left" | "bracket-right" | "finial-left" | "finial-right";
@@ -84,10 +85,12 @@ export function Rod3DEditor({ imageData, layerOrder, polygon, rod, curtain, brac
       const bracketMaterial = createSurfaceMaterial(bracket);
       const curtainMaterial = createSurfaceMaterial(curtain, true);
       const parts = new Map<PartId, Object3D>();
+      const transformKeys = new Map<PartId, string>();
       const layerDepth = (product?: Product) => product ? Math.max(0, orderedLayers.length - 1 - orderedLayers.indexOf(product.id)) * .018 : 0;
       const register = (id: PartId, object: Object3D, product?: Product) => {
         object.userData.partId = id; object.userData.layerDepth = layerDepth(product);
         object.userData.layerRenderOrder = product ? orderedLayers.length - orderedLayers.indexOf(product.id) : 0;
+        if (product) transformKeys.set(id, `${product.id}:${id}`);
         parts.set(id, object); scene.add(object); return object;
       };
       if (hook) {
@@ -186,6 +189,17 @@ export function Rod3DEditor({ imageData, layerOrder, polygon, rod, curtain, brac
       const initialPart = parts.has(selectedPartRef.current) ? selectedPartRef.current : (parts.keys().next().value as PartId); controls.attach(parts.get(initialPart)!);
       selectPartRef.current = (part) => { const object = parts.get(part); if (object) controls.attach(object); };
       let controlsDragging = false; controls.addEventListener("dragging-changed", (event) => { controlsDragging = Boolean(event.value); });
+      const saveSelectedTransform = () => {
+        const part = selectedPartRef.current; const object = parts.get(part); const key = transformKeys.get(part);
+        if (!object || !key) return;
+        const transform: AssetTransform = {
+          position: { x: object.position.x, y: object.position.y, z: object.position.z },
+          rotation: { x: object.rotation.x, y: object.rotation.y, z: object.rotation.z },
+          scale: { x: object.scale.x, y: object.scale.y, z: object.scale.z },
+        };
+        useConfiguratorStore.getState().setAssetTransform(key, transform);
+      };
+      controls.addEventListener("mouseUp", saveSelectedTransform);
 
       const topLeft = polygon[0]; const topRight = polygon[1];
       function layout() {
@@ -238,6 +252,14 @@ export function Rod3DEditor({ imageData, layerOrder, polygon, rod, curtain, brac
           if (finialPart && finial?.material === "brass") finialPart.rotation.z = angle;
           const bracket = parts.get(`bracket-${side}`); if (bracket) { bracket.position.copy(topCenter).add(new THREE.Vector3(Math.cos(angle) * windowWidth * .38 * sign, Math.sin(angle) * windowWidth * .38 * sign + .03, Number(bracket.userData.layerDepth))); bracket.rotation.z = angle; }
         }
+        const savedTransforms = useConfiguratorStore.getState().assetTransforms;
+        for (const [part, object] of parts) {
+          const saved = savedTransforms[transformKeys.get(part) ?? ""];
+          if (!saved) continue;
+          object.position.set(saved.position.x, saved.position.y, saved.position.z);
+          object.rotation.set(saved.rotation.x, saved.rotation.y, saved.rotation.z);
+          object.scale.set(saved.scale.x, saved.scale.y, saved.scale.z);
+        }
       }
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh && object !== shadowCatcher && object.name !== "curtain-panel") object.castShadow = true;
@@ -255,7 +277,7 @@ export function Rod3DEditor({ imageData, layerOrder, polygon, rod, curtain, brac
       };
       renderer.domElement.addEventListener("pointerdown", onDown);
       let frame = 0; const render = () => { frame = requestAnimationFrame(render); controls.setMode(modeRef.current); renderer.render(scene, camera); }; render();
-      cleanup = () => { cancelAnimationFrame(frame); resize.disconnect(); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", onDown); scene.traverse((object) => { if (object instanceof THREE.Mesh) object.geometry.dispose(); }); [rodMaterial, hookMaterial, wandMaterial, finialMaterial, bracketMaterial, curtainMaterial].forEach(disposeSurfaceMaterial); shadowMaterial.dispose(); environmentMap.dispose(); environmentScene.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); };
+      cleanup = () => { cancelAnimationFrame(frame); resize.disconnect(); controls.removeEventListener("mouseUp", saveSelectedTransform); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", onDown); scene.traverse((object) => { if (object instanceof THREE.Mesh) object.geometry.dispose(); }); [rodMaterial, hookMaterial, wandMaterial, finialMaterial, bracketMaterial, curtainMaterial].forEach(disposeSurfaceMaterial); shadowMaterial.dispose(); environmentMap.dispose(); environmentScene.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); };
     });
     return () => { disposed = true; cleanup(); };
   }, [bracketId, curtainId, curtainStyle, finialId, imageData, layerOrderKey, polygon, rodId, hook, wand, finial, rod, bracket, curtain]);

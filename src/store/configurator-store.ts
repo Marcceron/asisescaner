@@ -4,6 +4,12 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { Measurement, Point, ProductCategory, SelectedItem } from "@/domain/types";
 
+export type AssetTransform = {
+  position: { x: number; y: number; z: number };
+  rotation: { x: number; y: number; z: number };
+  scale: { x: number; y: number; z: number };
+};
+
 const initialPolygon: [Point, Point, Point, Point] = [
   { x: 0.22, y: 0.2 },
   { x: 0.78, y: 0.18 },
@@ -18,6 +24,7 @@ type ConfiguratorState = {
   measurement: Measurement;
   activeCategory: ProductCategory;
   selectedItems: SelectedItem[];
+  assetTransforms: Record<string, AssetTransform>;
   selectionPast: SelectedItem[][];
   selectionFuture: SelectedItem[][];
   setImage: (imageData: string | null, size?: { width: number; height: number }) => void;
@@ -29,6 +36,7 @@ type ConfiguratorState = {
   toggleProduct: (productId: string, category: ProductCategory) => void;
   removeProduct: (productId: string) => void;
   reorderSelectedItem: (productId: string, targetProductId: string) => void;
+  setAssetTransform: (key: string, transform: AssetTransform) => void;
   undoSelection: () => void;
   redoSelection: () => void;
   resetProject: () => void;
@@ -55,6 +63,7 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
       measurement: emptyMeasurement,
       activeCategory: "cortinas",
       selectedItems: [],
+      assetTransforms: {},
       selectionPast: [],
       selectionFuture: [],
       setImage: (imageData, size) =>
@@ -63,6 +72,7 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
           imageSize: size ?? { width: 1512, height: 982 },
           polygon: initialPolygon,
           measurement: emptyMeasurement,
+          assetTransforms: {},
         }),
       setPolygon: (polygon) => set({ polygon }),
       setPolygonPoint: (index, point) =>
@@ -108,6 +118,8 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
           const [moved] = selectedItems.splice(from, 1); selectedItems.splice(to, 0, moved);
           return { selectedItems, selectionPast: [...state.selectionPast, state.selectedItems].slice(-40), selectionFuture: [] };
         }),
+      setAssetTransform: (key, transform) =>
+        set((state) => ({ assetTransforms: { ...state.assetTransforms, [key]: transform } })),
       undoSelection: () =>
         set((state) => {
           const previous = state.selectionPast.at(-1); if (!previous) return state;
@@ -131,6 +143,7 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
           polygon: initialPolygon,
           measurement: emptyMeasurement,
           selectedItems: [],
+          assetTransforms: {},
           selectionPast: [],
           selectionFuture: [],
           activeCategory: "cortinas",
