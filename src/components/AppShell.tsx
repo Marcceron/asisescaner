@@ -199,13 +199,13 @@ export function AppShell() {
               <span>{isDetecting ? "Detectando ventana…" : workspaceMode === "measurement" ? "Modo Medición" : "Modo Edición"}</span>
               <button className={workspaceMode === "measurement" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("measurement"); }} aria-label="Modo Medición" aria-pressed={workspaceMode === "measurement"} title="Ajustar las cuatro esquinas y calcular medidas."><img src="/assets/resize.svg" alt="" width="24" height="24" /></button>
               <button className={workspaceMode === "editing" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("editing"); }} aria-label="Modo Edición" aria-pressed={workspaceMode === "editing"} title="Colocar los assets sobre la ventana."><img src="/assets/edit.svg" alt="" width="18" height="18" /></button>
-              <button className="historyButton" onClick={undoSelection} disabled={!store.selectionPast.length} aria-label="Deshacer" title="Deshacer (⌘/Ctrl+Z)"><span aria-hidden="true">↶</span></button>
-              <button className="historyButton" onClick={redoSelection} disabled={!store.selectionFuture.length} aria-label="Rehacer" title="Rehacer (⌘/Ctrl+Shift+Z)"><span aria-hidden="true">↷</span></button>
             </div>
             <div className="floatingTools" aria-label="Herramientas">
               <button onClick={() => setCameraOpen(true)} aria-label="Tomar otra fotografía"><img src="/assets/camera.svg" alt="" width="28" height="28" /></button>
               <button onClick={() => { setPanEnabled(false); setWorkspaceMode("measurement"); }} aria-label="Ajustar medición" aria-pressed={!panEnabled && workspaceMode === "measurement"}><img src="/assets/cursor.svg" alt="" width="28" height="28" /></button>
               <button onClick={() => setPanEnabled((value) => !value)} aria-label="Herramienta de mano para paneo" aria-pressed={panEnabled} title="Mover la mesa de trabajo"><img src="/assets/hand.svg" alt="" width="28" height="28" /></button>
+              <button className="historyButton" onClick={undoSelection} disabled={!store.selectionPast.length} aria-label="Deshacer" title="Deshacer (⌘/Ctrl+Z)"><span aria-hidden="true">↶</span></button>
+              <button className="historyButton" onClick={redoSelection} disabled={!store.selectionFuture.length} aria-label="Rehacer" title="Rehacer (⌘/Ctrl+Shift+Z)"><span aria-hidden="true">↷</span></button>
               <button className="zoomTool" onClick={() => setViewZoom((value) => Math.max(.15, Math.round(value / 1.25 * 100) / 100))} aria-label="Alejar imagen" disabled={viewZoom <= .15} title="Alejar imagen"><span aria-hidden="true">−</span></button>
               <button className="zoomTool" onClick={() => setViewZoom((value) => Math.min(6, Math.round(value * 1.25 * 100) / 100))} aria-label="Acercar imagen" disabled={viewZoom >= 6} title="Acercar imagen"><span aria-hidden="true">+</span></button>
               <button onClick={store.resetProject} aria-label="Eliminar fotografía"><img src="/assets/delete.svg" alt="" width="28" height="28" /></button>
