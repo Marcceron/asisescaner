@@ -19,13 +19,14 @@ export function createSurfaceMaterial(product?: Product, fabric = false) {
       sheen: .32, sheenColor: color, sheenRoughness: .82, envMapIntensity: .3,
     })
     : new MeshPhysicalMaterial({
-      color, metalness: preset.metalness, roughness: wood ? .91 : preset.roughness, side: FrontSide,
-      envMapIntensity: metal ? 1.15 : wood ? .28 : .65,
-      clearcoat: plastic ? .38 : wood ? 0 : metal ? .16 : .08,
-      clearcoatRoughness: plastic ? .34 : wood ? .86 : .28,
-      specularIntensity: wood ? .2 : 1,
-      ior: wood ? 1.35 : 1.5,
-      anisotropy: metal ? .32 : 0,
+      color, metalness: preset.metalness, roughness: wood ? .91 : plastic ? .46 : preset.roughness, side: FrontSide,
+      envMapIntensity: metal ? 1.05 : wood ? .28 : plastic ? .48 : .65,
+      clearcoat: plastic ? .22 : wood ? 0 : metal ? .04 : .08,
+      clearcoatRoughness: plastic ? .48 : wood ? .86 : metal ? .45 : .28,
+      specularIntensity: wood ? .2 : plastic ? .62 : 1,
+      ior: wood ? 1.35 : plastic ? 1.46 : 1.5,
+      anisotropy: metal ? .58 : 0,
+      anisotropyRotation: metal ? Math.PI / 2 : 0,
     });
   if (wood || fabric) {
     const canvas = document.createElement("canvas");
@@ -101,20 +102,46 @@ export function createSurfaceMaterial(product?: Product, fabric = false) {
     }
   }
   if (metal || plastic) {
-    const finishCanvas = document.createElement("canvas"); finishCanvas.width = finishCanvas.height = 128;
-    const finish = finishCanvas.getContext("2d");
-    if (finish) {
-      finish.fillStyle = plastic ? "#969696" : "#888888"; finish.fillRect(0, 0, 128, 128);
-      const lines = plastic ? 18 : 64;
-      for (let line = 0; line < lines; line += 1) {
-        const y = (line * 37) % 128;
-        finish.fillStyle = plastic ? "rgba(255,255,255,.055)" : `rgba(255,255,255,${.025 + (line % 5) * .008})`;
-        finish.fillRect(0, y, 128, 1);
+    const colorCanvas = document.createElement("canvas"); colorCanvas.width = colorCanvas.height = 256;
+    const detailCanvas = document.createElement("canvas"); detailCanvas.width = detailCanvas.height = 256;
+    const colorContext = colorCanvas.getContext("2d"); const detailContext = detailCanvas.getContext("2d");
+    if (colorContext && detailContext) {
+      colorContext.fillStyle = plastic ? "#f7f7f7" : "#ededed"; colorContext.fillRect(0, 0, 256, 256);
+      detailContext.fillStyle = plastic ? "#dddddd" : "#d0d0d0"; detailContext.fillRect(0, 0, 256, 256);
+      if (metal) {
+        // Longitudinal hairlines follow the UV axis of tubes and subtly break reflections.
+        for (let x = 0; x < 256; x += 1) {
+          const noise = ((x * 73) % 29) / 29;
+          colorContext.fillStyle = `rgba(${noise > .54 ? 255 : 28},${noise > .54 ? 255 : 28},${noise > .54 ? 255 : 28},${.012 + noise * .026})`;
+          colorContext.fillRect(x, 0, 1, 256);
+          const roughness = Math.round(184 + noise * 62);
+          detailContext.fillStyle = `rgb(${roughness},${roughness},${roughness})`;
+          detailContext.fillRect(x, 0, 1, 256);
+        }
+        for (let scratch = 0; scratch < 14; scratch += 1) {
+          const x = (scratch * 83) % 250; const y = (scratch * 47) % 240;
+          colorContext.strokeStyle = "rgba(255,255,255,.09)"; colorContext.lineWidth = .6;
+          colorContext.beginPath(); colorContext.moveTo(x, y); colorContext.lineTo(x + 3 + scratch % 8, y + 20 + scratch % 19); colorContext.stroke();
+        }
+      } else {
+        // Fine deterministic orange-peel variation resembles injection-moulded plastic.
+        for (let y = 0; y < 256; y += 2) for (let x = 0; x < 256; x += 2) {
+          const noise = ((x * 17 + y * 31 + x * y * 3) % 37) / 37;
+          const shade = Math.round(202 + noise * 46);
+          detailContext.fillStyle = `rgb(${shade},${shade},${shade})`; detailContext.fillRect(x, y, 2, 2);
+          colorContext.fillStyle = `rgba(${noise > .5 ? 255 : 80},${noise > .5 ? 255 : 80},${noise > .5 ? 255 : 80},.018)`;
+          colorContext.fillRect(x, y, 1, 1);
+        }
       }
-      const finishMap = new CanvasTexture(finishCanvas); finishMap.wrapS = finishMap.wrapT = RepeatWrapping;
-      finishMap.repeat.set(metal ? 2 : 4, metal ? 12 : 6);
-      material.bumpMap = finishMap; material.bumpScale = metal ? .0012 : .002;
-      material.roughnessMap = finishMap;
+      const colorMap = new CanvasTexture(colorCanvas); colorMap.colorSpace = SRGBColorSpace;
+      const detailMap = new CanvasTexture(detailCanvas);
+      for (const texture of [colorMap, detailMap]) {
+        texture.wrapS = texture.wrapT = RepeatWrapping;
+        texture.repeat.set(metal ? 3 : 7, metal ? 1 : 7);
+      }
+      material.map = colorMap;
+      material.bumpMap = detailMap; material.bumpScale = metal ? .0018 : .0011;
+      material.roughnessMap = detailMap;
     }
   }
   return material;
