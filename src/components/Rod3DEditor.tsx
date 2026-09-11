@@ -6,6 +6,7 @@ import type { Object3D } from "three";
 import type { Point, Product } from "@/domain/types";
 import { projectIntoQuadrilateral } from "@/services/visualization/perspective";
 import { createSurfaceMaterial, disposeSurfaceMaterial } from "@/services/visualization/surface-material";
+import { calculateCurtainDrape } from "@/services/visualization/curtain-drape";
 
 type TransformMode = "translate" | "rotate" | "scale";
 type PartId = "hook" | "wand" | "curtain" | "tube" | "bracket-left" | "bracket-right" | "finial-left" | "finial-right";
@@ -88,9 +89,9 @@ export function Rod3DEditor({ polygon, rod, curtain, bracket, finial, hook, wand
         const group = register("curtain", new THREE.Group());
         const panels = curtainStyle === "roller" ? 1 : 2;
         for (let index = 0; index < panels; index += 1) {
-          const geometry = new THREE.PlaneGeometry(1, 1, 28, 18);
+          const geometry = new THREE.PlaneGeometry(1, 1, curtainStyle === "roller" ? 24 : 48, curtainStyle === "roller" ? 18 : 30);
           const panel = new THREE.Mesh(geometry, curtainMaterial);
-          const gap = curtain?.pattern && panels === 2 ? .012 : 0;
+          const gap = panels === 2 ? (curtain?.pattern ? .012 : .006) : 0;
           panel.userData.uStart = index / panels + (index === 1 ? gap : 0);
           panel.userData.uEnd = (index + 1) / panels - (index === 0 ? gap : 0);
           panel.name = "curtain-panel"; group.add(panel);
@@ -185,9 +186,10 @@ export function Rod3DEditor({ polygon, rod, curtain, bracket, finial, hook, wand
             const uStart = Number(child.userData.uStart); const uEnd = Number(child.userData.uEnd);
             for (let vertex = 0; vertex < position.count; vertex += 1) {
               const u = uStart + uv.getX(vertex) * (uEnd - uStart); const v = 1 - uv.getY(vertex);
-              const projected = projectIntoQuadrilateral(polygon, u, v);
-              const scenePoint = point(projected); const wave = curtainStyle === "roller" ? 0 : Math.sin(u * Math.PI * (curtainStyle === "wave" ? 13 : 9)) * windowWidth * .012;
-              position.setXYZ(vertex, scenePoint.x, scenePoint.y, scenePoint.z + wave);
+              const drape = calculateCurtainDrape({ u, v, uStart, uEnd, windowWidth, style: curtainStyle });
+              const projected = projectIntoQuadrilateral(polygon, drape.u, drape.v);
+              const scenePoint = point(projected);
+              position.setXYZ(vertex, scenePoint.x, scenePoint.y, scenePoint.z + drape.depth);
             }
             position.needsUpdate = true; geometry.computeVertexNormals(); geometry.computeBoundingSphere();
           } else if (child.name === "roller-cassette") {
