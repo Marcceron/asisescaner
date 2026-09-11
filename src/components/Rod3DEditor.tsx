@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { createPortal } from "react-dom";
 import type { Object3D } from "three";
 import type { Point, Product } from "@/domain/types";
 import { projectIntoQuadrilateral } from "@/services/visualization/perspective";
@@ -21,6 +22,7 @@ export function Rod3DEditor({ polygon, rod, curtain, bracket, finial, hook, wand
   const modeRef = useRef<TransformMode>("translate");
   const selectPartRef = useRef<(part: PartId) => void>(() => {});
   const [mode, setMode] = useState<TransformMode>("translate");
+  const canUsePortal = useSyncExternalStore(() => () => {}, () => true, () => false);
   const [selectedPart, setSelectedPart] = useState<PartId>(rod ? "tube" : bracket ? "bracket-left" : finial ? "finial-left" : hook ? "hook" : wand ? "wand" : "curtain");
   const selectedPartRef = useRef<PartId>(selectedPart);
   const rodId = rod?.id;
@@ -221,7 +223,7 @@ export function Rod3DEditor({ polygon, rod, curtain, bracket, finial, hook, wand
   const selectedKind = selectedPart === "hook" || selectedPart === "wand" ? selectedPart : selectedPart === "curtain" ? "curtain" : selectedPart === "tube" ? "rod" : selectedPart.startsWith("bracket") ? "bracket" : "finial";
   const deleteSelected = { hook: onDeleteHook, wand: onDeleteWand, curtain: onDeleteCurtain, rod: onDeleteRod, bracket: onDeleteBracket, finial: onDeleteFinial }[selectedKind];
   const selectedProductName = { hook, wand, curtain, rod, bracket, finial }[selectedKind]?.name;
-  return <div ref={hostRef} className="rod3dEditor">
+  const controlsOverlay = <>
     <div className="gizmoToolbar" aria-label="Controladores 3D">
       <select aria-label="Componente 3D" value={selectedPart} onChange={(event) => { const part = event.target.value as PartId; setSelectedPart(part); selectPartRef.current(part); }}>{availableParts.map((part) => <option key={part} value={part}>{labels[part]}</option>)}</select>
       <button className={mode === "translate" ? "active" : ""} onClick={() => setMode("translate")} aria-label={`Mover ${labels[selectedPart]}`}>Mover</button>
@@ -230,5 +232,9 @@ export function Rod3DEditor({ polygon, rod, curtain, bracket, finial, hook, wand
       <button className="danger" onClick={deleteSelected} aria-label={`Eliminar ${selectedProductName}`}><img src="/assets/delete.svg" alt="" />Eliminar</button>
     </div>
     <span className="gizmoHint">Editando: {labels[selectedPart]} · selecciona otra pieza en la imagen o en el menú</span>
+  </>;
+
+  return <div ref={hostRef} className="rod3dEditor">
+    {canUsePortal && createPortal(controlsOverlay, document.body)}
   </div>;
 }
