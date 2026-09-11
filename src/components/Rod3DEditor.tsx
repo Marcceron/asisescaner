@@ -57,15 +57,24 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.setClearColor(0x000000, 0);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = .86;
+      renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFShadowMap;
       renderer.domElement.className = "rod3dCanvas"; renderer.domElement.setAttribute("aria-label", "Editor de componentes 3D"); target.appendChild(renderer.domElement);
       const environmentScene = new RoomEnvironment(); const pmrem = new THREE.PMREMGenerator(renderer);
       const environmentMap = pmrem.fromScene(environmentScene, .035).texture; scene.environment = environmentMap;
       scene.add(new THREE.HemisphereLight(lighting.ambientColor, 0x302a25, lighting.ambientIntensity));
       const light = new THREE.DirectionalLight(lighting.keyColor, lighting.keyIntensity);
       const keyX = Math.abs(lighting.directionX) < .28 ? (lighting.directionX < 0 ? -.28 : .28) : lighting.directionX;
-      light.position.set(keyX * 5, lighting.directionY * 3.5, 3); scene.add(light);
+      light.position.set(keyX * 5, lighting.directionY * 3.5, 3); light.castShadow = true;
+      light.shadow.mapSize.set(window.devicePixelRatio > 1 ? 1024 : 768, window.devicePixelRatio > 1 ? 1024 : 768);
+      light.shadow.bias = -.00035; light.shadow.normalBias = .025; light.shadow.radius = 3;
+      light.shadow.camera.near = .1; light.shadow.camera.far = 14;
+      light.shadow.camera.left = -4; light.shadow.camera.right = 4; light.shadow.camera.top = 3; light.shadow.camera.bottom = -3;
+      scene.add(light);
       const fill = new THREE.DirectionalLight(lighting.ambientColor, .12);
       fill.position.set(-lighting.directionX * 3, -lighting.directionY * 2, 3); scene.add(fill);
+      const shadowMaterial = new THREE.ShadowMaterial({ color: 0x17120e, opacity: .24, transparent: true, depthWrite: false });
+      const shadowCatcher = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), shadowMaterial);
+      shadowCatcher.position.z = -.025; shadowCatcher.receiveShadow = true; scene.add(shadowCatcher);
       const rodMaterial = createSurfaceMaterial(rod);
       const hookMaterial = createSurfaceMaterial(hook);
       const wandMaterial = createSurfaceMaterial(wand);
@@ -99,6 +108,7 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
         for (let index = 0; index < panels; index += 1) {
           const geometry = new THREE.PlaneGeometry(1, 1, curtainStyle === "roller" ? 24 : 48, curtainStyle === "roller" ? 18 : 30);
           const panel = new THREE.Mesh(geometry, curtainMaterial);
+          panel.castShadow = curtainStyle !== "sheer";
           const gap = panels === 2 ? (curtain?.pattern ? .012 : .006) : 0;
           panel.userData.uStart = index / panels + (index === 1 ? gap : 0);
           panel.userData.uEnd = (index + 1) / panels - (index === 0 ? gap : 0);
@@ -174,6 +184,7 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
       function layout() {
         const width = Math.max(1, target.clientWidth); const height = Math.max(1, target.clientHeight); const aspect = width / height;
         renderer.setSize(width, height, false); camera.left = -aspect; camera.right = aspect; camera.top = 1; camera.bottom = -1; camera.updateProjectionMatrix();
+        shadowCatcher.scale.set(aspect, 1, 1);
         const point = (value: Point) => new THREE.Vector3((value.x - .5) * 2 * aspect, (.5 - value.y) * 2, .08);
         const tl = point(topLeft); const tr = point(topRight);
         const topCenter = tl.clone().add(tr).multiplyScalar(.5);
@@ -213,6 +224,9 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
           const bracket = parts.get(`bracket-${side}`); if (bracket) { bracket.position.copy(topCenter).add(new THREE.Vector3(Math.cos(angle) * windowWidth * .38 * sign, Math.sin(angle) * windowWidth * .38 * sign + .03, 0)); bracket.rotation.z = angle; }
         }
       }
+      scene.traverse((object) => {
+        if (object instanceof THREE.Mesh && object !== shadowCatcher && object.name !== "curtain-panel") object.castShadow = true;
+      });
       layout(); const resize = new ResizeObserver(layout); resize.observe(target);
 
       const raycaster = new THREE.Raycaster(); const pointer = new THREE.Vector2();
@@ -225,7 +239,7 @@ export function Rod3DEditor({ imageData, polygon, rod, curtain, bracket, finial,
       };
       renderer.domElement.addEventListener("pointerdown", onDown);
       let frame = 0; const render = () => { frame = requestAnimationFrame(render); controls.setMode(modeRef.current); renderer.render(scene, camera); }; render();
-      cleanup = () => { cancelAnimationFrame(frame); resize.disconnect(); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", onDown); scene.traverse((object) => { if (object instanceof THREE.Mesh) object.geometry.dispose(); }); [rodMaterial, hookMaterial, wandMaterial, finialMaterial, bracketMaterial, curtainMaterial].forEach(disposeSurfaceMaterial); environmentMap.dispose(); environmentScene.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); };
+      cleanup = () => { cancelAnimationFrame(frame); resize.disconnect(); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", onDown); scene.traverse((object) => { if (object instanceof THREE.Mesh) object.geometry.dispose(); }); [rodMaterial, hookMaterial, wandMaterial, finialMaterial, bracketMaterial, curtainMaterial].forEach(disposeSurfaceMaterial); shadowMaterial.dispose(); environmentMap.dispose(); environmentScene.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); };
     });
     return () => { disposed = true; cleanup(); };
   }, [bracketId, curtainId, curtainStyle, finialId, imageData, polygon, rodId, hook, wand, finial, rod, bracket, curtain]);

@@ -19,10 +19,12 @@ export function createSurfaceMaterial(product?: Product, fabric = false) {
       sheen: .32, sheenColor: color, sheenRoughness: .82, envMapIntensity: .3,
     })
     : new MeshPhysicalMaterial({
-      color, metalness: preset.metalness, roughness: preset.roughness, side: FrontSide,
-      envMapIntensity: metal ? 1.15 : .65,
-      clearcoat: plastic ? .38 : wood ? .12 : metal ? .16 : .08,
-      clearcoatRoughness: plastic ? .34 : wood ? .55 : .28,
+      color, metalness: preset.metalness, roughness: wood ? .91 : preset.roughness, side: FrontSide,
+      envMapIntensity: metal ? 1.15 : wood ? .28 : .65,
+      clearcoat: plastic ? .38 : wood ? 0 : metal ? .16 : .08,
+      clearcoatRoughness: plastic ? .34 : wood ? .86 : .28,
+      specularIntensity: wood ? .2 : 1,
+      ior: wood ? 1.35 : 1.5,
       anisotropy: metal ? .32 : 0,
     });
   if (wood || fabric) {
@@ -34,7 +36,7 @@ export function createSurfaceMaterial(product?: Product, fabric = false) {
       if (wood) {
         // Vertical grain follows cylinders' longitudinal UV direction.
         for (let x = 0; x < 256; x += 2) {
-          ctx.strokeStyle = `rgba(30,16,8,${.045 + .07 * (1 + Math.sin(x * 1.71)) / 2})`;
+          ctx.strokeStyle = `rgba(25,12,5,${.08 + .13 * (1 + Math.sin(x * 1.71)) / 2})`;
           ctx.lineWidth = 1 + (x % 3);
           ctx.beginPath();
           for (let y = 0; y <= 256; y += 4) {
@@ -42,6 +44,11 @@ export function createSurfaceMaterial(product?: Product, fabric = false) {
             if (y === 0) ctx.moveTo(px, y); else ctx.lineTo(px, y);
           }
           ctx.stroke();
+        }
+        for (let knot = 0; knot < 5; knot += 1) {
+          const x = 28 + knot * 47; const y = 38 + (knot * 61) % 170;
+          ctx.strokeStyle = "rgba(42,20,8,.18)"; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(x, y, 8 + knot % 3, 18 + knot % 2 * 5, 0, 0, Math.PI * 2); ctx.stroke();
         }
       } else {
         if (pattern) {
@@ -70,7 +77,7 @@ export function createSurfaceMaterial(product?: Product, fabric = false) {
       if (fabric) map.repeat.set(2, 4);
       material.map = map; material.color.set("#ffffff");
       if (wood) {
-        material.bumpMap = map; material.bumpScale = .004;
+        material.bumpMap = map; material.bumpScale = .009;
         material.roughnessMap = map;
       }
     }
