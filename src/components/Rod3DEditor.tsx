@@ -56,7 +56,7 @@ export function Rod3DEditor({ imageData, layerOrder, polygon, rod, curtain, brac
       if (disposed) return;
       const scene = new THREE.Scene();
       const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, -20, 20); camera.position.set(0, 0, 8);
-      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, preserveDrawingBuffer: true });
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); renderer.setClearColor(0x000000, 0);
       renderer.outputColorSpace = THREE.SRGBColorSpace;
       renderer.toneMapping = THREE.NeutralToneMapping; renderer.toneMappingExposure = .86;
@@ -185,7 +185,13 @@ export function Rod3DEditor({ imageData, layerOrder, polygon, rod, curtain, brac
         }
       }
 
-      const controls = new TransformControls(camera, renderer.domElement); controls.setMode(modeRef.current); controls.setSpace("local"); controls.setSize(.7); scene.add(controls.getHelper());
+      const controls = new TransformControls(camera, renderer.domElement); controls.setMode(modeRef.current); controls.setSpace("local"); controls.setSize(.7);
+      const controlsHelper = controls.getHelper(); scene.add(controlsHelper);
+      const onQuoteCapture = (event: Event) => {
+        controlsHelper.visible = !(event as CustomEvent<boolean>).detail;
+        renderer.render(scene, camera);
+      };
+      window.addEventListener("asis:quote-capture", onQuoteCapture);
       const initialPart = parts.has(selectedPartRef.current) ? selectedPartRef.current : (parts.keys().next().value as PartId); controls.attach(parts.get(initialPart)!);
       selectPartRef.current = (part) => { const object = parts.get(part); if (object) controls.attach(object); };
       let controlsDragging = false; controls.addEventListener("dragging-changed", (event) => { controlsDragging = Boolean(event.value); });
@@ -277,7 +283,7 @@ export function Rod3DEditor({ imageData, layerOrder, polygon, rod, curtain, brac
       };
       renderer.domElement.addEventListener("pointerdown", onDown);
       let frame = 0; const render = () => { frame = requestAnimationFrame(render); controls.setMode(modeRef.current); renderer.render(scene, camera); }; render();
-      cleanup = () => { cancelAnimationFrame(frame); resize.disconnect(); controls.removeEventListener("mouseUp", saveSelectedTransform); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", onDown); scene.traverse((object) => { if (object instanceof THREE.Mesh) object.geometry.dispose(); }); [rodMaterial, hookMaterial, wandMaterial, finialMaterial, bracketMaterial, curtainMaterial].forEach(disposeSurfaceMaterial); shadowMaterial.dispose(); environmentMap.dispose(); environmentScene.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); };
+      cleanup = () => { cancelAnimationFrame(frame); resize.disconnect(); window.removeEventListener("asis:quote-capture", onQuoteCapture); controls.removeEventListener("mouseUp", saveSelectedTransform); controls.dispose(); renderer.domElement.removeEventListener("pointerdown", onDown); scene.traverse((object) => { if (object instanceof THREE.Mesh) object.geometry.dispose(); }); [rodMaterial, hookMaterial, wandMaterial, finialMaterial, bracketMaterial, curtainMaterial].forEach(disposeSurfaceMaterial); shadowMaterial.dispose(); environmentMap.dispose(); environmentScene.dispose(); pmrem.dispose(); renderer.dispose(); renderer.domElement.remove(); };
     });
     return () => { disposed = true; cleanup(); };
   }, [bracketId, curtainId, curtainStyle, finialId, imageData, layerOrderKey, polygon, rodId, hook, wand, finial, rod, bracket, curtain]);

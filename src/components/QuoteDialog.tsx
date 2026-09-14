@@ -16,18 +16,20 @@ type Props = {
   open: boolean;
   onClose: () => void;
   imageData: string | null;
+  captureScene: () => Promise<string | null>;
   measurement: Measurement;
   selectedItems: SelectedItem[];
   products: Product[];
 };
 
-export function QuoteDialog({ open, onClose, imageData, measurement, selectedItems, products }: Props) {
+export function QuoteDialog({ open, onClose, imageData, captureScene, measurement, selectedItems, products }: Props) {
   const [customer, setCustomer] = useState<Customer>({ name: "", email: "", phone: "", notes: "" });
   const [error, setError] = useState("");
+  const [generating, setGenerating] = useState(false);
 
   if (!open) return null;
 
-  function submit(event: React.FormEvent) {
+  async function submit(event: React.FormEvent) {
     event.preventDefault();
     const result = schema.safeParse(customer);
     if (!result.success) {
@@ -42,8 +44,16 @@ export function QuoteDialog({ open, onClose, imageData, measurement, selectedIte
       setError("Selecciona al menos un producto.");
       return;
     }
-    generateQuotePdf({ customer: result.data, measurement, imageData, items: selectedItems, products });
-    onClose();
+    setGenerating(true);
+    try {
+      const configuredScene = await captureScene();
+      await generateQuotePdf({ customer: result.data, measurement, imageData: configuredScene ?? imageData, items: selectedItems, products });
+      onClose();
+    } catch {
+      setError("No fue posible generar el PDF. Inténtalo de nuevo.");
+    } finally {
+      setGenerating(false);
+    }
   }
 
   return (
@@ -64,7 +74,7 @@ export function QuoteDialog({ open, onClose, imageData, measurement, selectedIte
         <label>Notas<textarea value={customer.notes} onChange={(e) => setCustomer({ ...customer, notes: e.target.value })} rows={3} /></label>
         <p className="quoteNotice">El PDF indicará que las medidas son aproximadas y requieren verificación física.</p>
         {error && <p className="errorMessage" role="alert">{error}</p>}
-        <button className="primaryButton" type="submit">Descargar PDF</button>
+        <button className="primaryButton" type="submit" disabled={generating}>{generating ? "Preparando PDF…" : "Descargar PDF"}</button>
       </form>
     </div>
   );

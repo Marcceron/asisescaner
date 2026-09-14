@@ -16,6 +16,7 @@ import { InteractiveDotField } from "./InteractiveDotField";
 import { PerspectiveAssetLayer } from "./PerspectiveAssetLayer";
 import { ProductPanel } from "./ProductPanel";
 import { QuoteDialog } from "./QuoteDialog";
+import { captureConfiguredSceneJpeg } from "@/services/quotation/capture-scene";
 import { ReferenceOverlay } from "./ReferenceOverlay";
 
 export function AppShell() {
@@ -248,7 +249,7 @@ export function AppShell() {
       </footer>
 
       <CameraCapture open={cameraOpen} onClose={() => setCameraOpen(false)} onCapture={handleCapture} />
-      <QuoteDialog open={quoteOpen} onClose={() => setQuoteOpen(false)} imageData={store.imageData} measurement={store.measurement} selectedItems={store.selectedItems} products={catalogProducts} />
+      <QuoteDialog open={quoteOpen} onClose={() => setQuoteOpen(false)} imageData={store.imageData} captureScene={captureConfiguredSceneJpeg} measurement={store.measurement} selectedItems={store.selectedItems} products={catalogProducts} />
     </main>
   );
 }
