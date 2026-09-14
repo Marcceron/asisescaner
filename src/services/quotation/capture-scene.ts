@@ -3,7 +3,7 @@ const nextPaint = () => new Promise<void>((resolve) => requestAnimationFrame(() 
 export async function captureConfiguredSceneJpeg() {
   const plane = document.querySelector<HTMLElement>(".imagePlane");
   const image = plane?.querySelector<HTMLImageElement>(".roomImage");
-  const renderer = plane?.querySelector<HTMLCanvasElement>(".rod3dCanvas");
+  const renderer = plane?.querySelector<HTMLCanvasElement>(".asset2dCanvas, .rod3dCanvas");
   if (!plane || !image || !image.complete) return null;
 
   const imageRect = image.getBoundingClientRect();
