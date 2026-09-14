@@ -19,11 +19,11 @@ const blankTransform = (): AssetTransform => ({ position: { x: 0, y: 0, z: 0 }, 
 function overlayUrl(product: Product) {
   const style = product.renderStyle;
   if (!style || !["wave", "blackout", "sheer", "roller", "rod", "bracket", "finial", "hook", "wand"].includes(style)) return product.image;
-  if (product.id.includes("curtain-grid")) return "/assets/overlays/curtain-grid.png";
-  if (product.id.includes("curtain-stripes")) return "/assets/overlays/curtain-stripes.png";
-  if (style === "wave" || style === "blackout" || style === "sheer" || style === "roller") return "/assets/overlays/curtain-dots.png";
+  if (product.id.includes("curtain-grid")) return "/assets/overlays/curtain-grid.png?v=2";
+  if (product.id.includes("curtain-stripes")) return "/assets/overlays/curtain-stripes.png?v=2";
+  if (style === "wave" || style === "blackout" || style === "sheer" || style === "roller") return "/assets/overlays/curtain-dots.png?v=2";
   const walnut = product.material === "walnut" || product.material === "wood" || product.id.includes("wood");
-  return `/assets/overlays/${style === "rod" ? "rod" : style}-${walnut ? "walnut" : "brass"}.png`;
+  return `/assets/overlays/${style === "rod" ? "rod" : style}-${walnut ? "walnut" : "brass"}.png?v=2`;
 }
 
 function loadImage(src: string) {
