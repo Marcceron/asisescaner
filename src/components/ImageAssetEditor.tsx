@@ -6,7 +6,6 @@ import type { Point, Product } from "@/domain/types";
 import { useConfiguratorStore, type AssetTransform } from "@/store/configurator-store";
 import type { RodEditorProps } from "./Rod3DEditor";
 
-type EditMode = "translate" | "rotate" | "scale";
 type PartId = "hook" | "wand" | "curtain" | "tube" | "bracket-left" | "bracket-right" | "finial-left" | "finial-right";
 type Part = { id: PartId; product: Product; image: HTMLImageElement; crop?: [number, number, number, number] };
 type CanvasPoint = { x: number; y: number };
@@ -69,10 +68,9 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
   const initialPart: PartId = rod ? "tube" : curtain ? "curtain" : bracket ? "bracket-left" : finial ? "finial-left" : hook ? "hook" : "wand";
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const partsRef = useRef<Part[]>([]);
+  const drawOrderRef = useRef<Part[]>([]);
   const placementsRef = useRef(new Map<PartId, Placement>());
-  const modeRef = useRef<EditMode>("translate");
   const selectedRef = useRef<PartId>(initialPart);
-  const [mode, setMode] = useState<EditMode>("translate");
   const [selectedPart, setSelectedPart] = useState<PartId>(initialPart);
   const [ready, setReady] = useState(false);
   const canUsePortal = useSyncExternalStore(() => () => {}, () => true, () => false);
@@ -87,7 +85,6 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
   ].filter(Boolean) as Array<{ id: PartId; product: Product; crop?: [number, number, number, number] }>, [bracket, curtain, finial, hook, rod, wand]);
 
   const availableParts = specs.map(({ id }) => id);
-  useEffect(() => { modeRef.current = mode; }, [mode]);
   useEffect(() => { selectedRef.current = selectedPart; }, [selectedPart]);
 
   useEffect(() => {
@@ -102,7 +99,7 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
     const canvas = canvasRef.current; const host = canvas?.parentElement;
     if (!canvas || !host || !ready) return;
     const context = canvas.getContext("2d"); if (!context) return;
-    let frame = 0; let dragging: { part: PartId; startX: number; startY: number; startAngle: number; transform: AssetTransform } | null = null;
+    let frame = 0; let dragging: { part: PartId; pointerId: number; startX: number; startY: number; transform: AssetTransform } | null = null;
 
     const keyFor = (part: Part) => `image:${part.product.id}:${part.id}`;
     const getTransform = (part: Part) => useConfiguratorStore.getState().assetTransforms[keyFor(part)] ?? blankTransform();
@@ -127,6 +124,7 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
       };
 
       const ordered = [...partsRef.current].sort((a, b) => layerOrder.indexOf(b.product.id) - layerOrder.indexOf(a.product.id));
+      drawOrderRef.current = ordered;
       placementsRef.current.clear();
       for (const part of ordered) {
         const placement = base(part.id); const transform = getTransform(part);
@@ -154,7 +152,7 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
           context.save(); context.strokeStyle = "rgba(0,145,255,.95)"; context.lineWidth = 1.5; context.setLineDash([6, 5]);
           if (selected.quad) { context.beginPath(); selected.quad.forEach((corner, index) => index ? context.lineTo(corner.x, corner.y) : context.moveTo(corner.x, corner.y)); context.closePath(); context.stroke(); } else { context.translate(selected.cx, selected.cy); context.rotate(selected.angle); context.strokeRect(-selected.width / 2, -selected.height / 2, selected.width, selected.height); }
           context.setLineDash([]);
-          context.fillStyle = modeRef.current === "rotate" ? "#ffd43b" : modeRef.current === "scale" ? "#00c853" : "#079cf1";
+          context.fillStyle = "#079cf1";
           const handles = selected.quad ?? [[-selected.width / 2, -selected.height / 2], [selected.width / 2, -selected.height / 2], [selected.width / 2, selected.height / 2], [-selected.width / 2, selected.height / 2]].map(([x, y]) => ({ x, y })) as Quad;
           for (const handle of handles) { context.beginPath(); context.arc(handle.x, handle.y, 6, 0, Math.PI * 2); context.fill(); context.strokeStyle = "white"; context.lineWidth = 2; context.stroke(); }
           context.restore();
@@ -162,17 +160,22 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
       }
     };
 
-    const hitPart = (x: number, y: number) => [...partsRef.current].reverse().find((part) => { const p = placementsRef.current.get(part.id); if (!p) return false; const dx = x - p.cx; const dy = y - p.cy; const cos = Math.cos(-p.angle); const sin = Math.sin(-p.angle); const lx = dx * cos - dy * sin; const ly = dx * sin + dy * cos; return Math.abs(lx) <= p.width / 2 && Math.abs(ly) <= p.height / 2; });
-    const onDown = (event: PointerEvent) => { const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top; const part = hitPart(x, y); if (!part) return; selectedRef.current = part.id; setSelectedPart(part.id); const p = placementsRef.current.get(part.id)!; dragging = { part: part.id, startX: x, startY: y, startAngle: Math.atan2(y - p.cy, x - p.cx), transform: structuredClone(getTransform(part)) }; canvas.setPointerCapture(event.pointerId); };
-    const onMove = (event: PointerEvent) => { if (!dragging) return; const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top; const part = partsRef.current.find((candidate) => candidate.id === dragging!.part); const p = placementsRef.current.get(dragging.part); if (!part || !p) return; const next = structuredClone(dragging.transform); const imageBounds = host.parentElement?.getBoundingClientRect() ?? host.getBoundingClientRect(); if (modeRef.current === "translate") { next.position.x += (x - dragging.startX) / imageBounds.width; next.position.y += (y - dragging.startY) / imageBounds.height; } else if (modeRef.current === "rotate") next.rotation.z += Math.atan2(y - p.cy, x - p.cx) - dragging.startAngle; else { const factor = Math.max(.15, 1 + (x - dragging.startX + y - dragging.startY) / 260); next.scale.x = dragging.transform.scale.x * factor; next.scale.y = dragging.transform.scale.y * factor; } useConfiguratorStore.getState().setAssetTransform(keyFor(part), next); };
-    const onUp = (event: PointerEvent) => { dragging = null; if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId); };
+    const contains = (part: Part, x: number, y: number) => { const p = placementsRef.current.get(part.id); if (!p) return false; const dx = x - p.cx; const dy = y - p.cy; const cos = Math.cos(-p.angle); const sin = Math.sin(-p.angle); const lx = dx * cos - dy * sin; const ly = dx * sin + dy * cos; return Math.abs(lx) <= p.width / 2 && Math.abs(ly) <= p.height / 2; };
+    const hitPart = (x: number, y: number) => {
+      const selected = partsRef.current.find((part) => part.id === selectedRef.current);
+      if (selected && contains(selected, x, y)) return selected;
+      return [...drawOrderRef.current].reverse().find((part) => contains(part, x, y));
+    };
+    const onDown = (event: PointerEvent) => { const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top; const part = hitPart(x, y); if (!part) return; event.preventDefault(); event.stopPropagation(); selectedRef.current = part.id; setSelectedPart(part.id); dragging = { part: part.id, pointerId: event.pointerId, startX: x, startY: y, transform: structuredClone(getTransform(part)) }; canvas.setPointerCapture(event.pointerId); };
+    const onMove = (event: PointerEvent) => { if (!dragging || event.pointerId !== dragging.pointerId) return; event.preventDefault(); const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top; const part = partsRef.current.find((candidate) => candidate.id === dragging!.part); if (!part) return; const next = structuredClone(dragging.transform); const imageBounds = host.parentElement?.getBoundingClientRect() ?? host.getBoundingClientRect(); next.position.x += (x - dragging.startX) / imageBounds.width; next.position.y += (y - dragging.startY) / imageBounds.height; useConfiguratorStore.getState().setAssetTransform(keyFor(part), next); };
+    const onUp = (event: PointerEvent) => { if (!dragging || event.pointerId !== dragging.pointerId) return; dragging = null; if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId); };
     const onCapture = (event: Event) => { controlsHidden.current = Boolean((event as CustomEvent<boolean>).detail); };
-    canvas.addEventListener("pointerdown", onDown); canvas.addEventListener("pointermove", onMove); canvas.addEventListener("pointerup", onUp); canvas.addEventListener("pointercancel", onUp); window.addEventListener("asis:quote-capture", onCapture); render();
-    return () => { cancelAnimationFrame(frame); canvas.removeEventListener("pointerdown", onDown); canvas.removeEventListener("pointermove", onMove); canvas.removeEventListener("pointerup", onUp); canvas.removeEventListener("pointercancel", onUp); window.removeEventListener("asis:quote-capture", onCapture); };
+    canvas.addEventListener("pointerdown", onDown); window.addEventListener("pointermove", onMove, { passive: false }); window.addEventListener("pointerup", onUp); window.addEventListener("pointercancel", onUp); window.addEventListener("asis:quote-capture", onCapture); render();
+    return () => { cancelAnimationFrame(frame); canvas.removeEventListener("pointerdown", onDown); window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); window.removeEventListener("pointercancel", onUp); window.removeEventListener("asis:quote-capture", onCapture); };
   }, [layerOrder, polygon, ready]);
 
   const selectedKind = selectedPart === "hook" || selectedPart === "wand" ? selectedPart : selectedPart === "curtain" ? "curtain" : selectedPart === "tube" ? "rod" : selectedPart.startsWith("bracket") ? "bracket" : "finial";
   const deleteSelected = { hook: onDeleteHook, wand: onDeleteWand, curtain: onDeleteCurtain, rod: onDeleteRod, bracket: onDeleteBracket, finial: onDeleteFinial }[selectedKind];
-  const controls = <><div className="gizmoToolbar" aria-label="Controladores de imagen"><select aria-label="Componente" value={selectedPart} onChange={(event) => { const part = event.target.value as PartId; selectedRef.current = part; setSelectedPart(part); }}>{availableParts.map((part) => <option key={part} value={part}>{labels[part]}</option>)}</select><button className={mode === "translate" ? "active" : ""} onClick={() => setMode("translate")}>Mover</button><button className={mode === "rotate" ? "active" : ""} onClick={() => setMode("rotate")}>Rotar</button><button className={mode === "scale" ? "active" : ""} onClick={() => setMode("scale")}>Escala</button><button className="danger" onClick={deleteSelected}><img src="/assets/delete.svg" alt="" />Eliminar</button></div><span className="gizmoHint">Editando imagen: {labels[selectedPart]} · arrastra sobre el asset para ajustar</span></>;
+  const controls = <><div className="gizmoToolbar" aria-label="Controladores de imagen"><select aria-label="Componente" value={selectedPart} onChange={(event) => { const part = event.target.value as PartId; selectedRef.current = part; setSelectedPart(part); }}>{availableParts.map((part) => <option key={part} value={part}>{labels[part]}</option>)}</select><button className="active">Mover</button><button className="danger" onClick={deleteSelected}><img src="/assets/delete.svg" alt="" />Eliminar</button></div><span className="gizmoHint">Moviendo: {labels[selectedPart]} · arrastra el asset para cambiarlo de lugar</span></>;
   return <div className="imageAssetEditor"><canvas ref={canvasRef} className="asset2dCanvas" aria-label="Editor de imágenes de productos" />{canUsePortal && createPortal(controls, document.body)}</div>;
 }
