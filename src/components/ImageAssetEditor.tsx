@@ -68,7 +68,6 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
   const initialPart: PartId = rod ? "tube" : curtain ? "curtain" : bracket ? "bracket-left" : finial ? "finial-left" : hook ? "hook" : "wand";
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const partsRef = useRef<Part[]>([]);
-  const drawOrderRef = useRef<Part[]>([]);
   const placementsRef = useRef(new Map<PartId, Placement>());
   const selectedRef = useRef<PartId>(initialPart);
   const [selectedPart, setSelectedPart] = useState<PartId>(initialPart);
@@ -124,7 +123,6 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
       };
 
       const ordered = [...partsRef.current].sort((a, b) => layerOrder.indexOf(b.product.id) - layerOrder.indexOf(a.product.id));
-      drawOrderRef.current = ordered;
       placementsRef.current.clear();
       for (const part of ordered) {
         const placement = base(part.id); const transform = getTransform(part);
@@ -160,13 +158,7 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
       }
     };
 
-    const contains = (part: Part, x: number, y: number) => { const p = placementsRef.current.get(part.id); if (!p) return false; const dx = x - p.cx; const dy = y - p.cy; const cos = Math.cos(-p.angle); const sin = Math.sin(-p.angle); const lx = dx * cos - dy * sin; const ly = dx * sin + dy * cos; return Math.abs(lx) <= p.width / 2 && Math.abs(ly) <= p.height / 2; };
-    const hitPart = (x: number, y: number) => {
-      const selected = partsRef.current.find((part) => part.id === selectedRef.current);
-      if (selected && contains(selected, x, y)) return selected;
-      return [...drawOrderRef.current].reverse().find((part) => contains(part, x, y));
-    };
-    const onDown = (event: PointerEvent) => { const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top; const part = hitPart(x, y); if (!part) return; event.preventDefault(); event.stopPropagation(); selectedRef.current = part.id; setSelectedPart(part.id); dragging = { part: part.id, pointerId: event.pointerId, startX: x, startY: y, transform: structuredClone(getTransform(part)) }; canvas.setPointerCapture(event.pointerId); };
+    const onDown = (event: PointerEvent) => { const part = partsRef.current.find((candidate) => candidate.id === selectedRef.current); if (!part) return; const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top; event.preventDefault(); event.stopPropagation(); dragging = { part: part.id, pointerId: event.pointerId, startX: x, startY: y, transform: structuredClone(getTransform(part)) }; canvas.setPointerCapture(event.pointerId); };
     const onMove = (event: PointerEvent) => { if (!dragging || event.pointerId !== dragging.pointerId) return; event.preventDefault(); const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top; const part = partsRef.current.find((candidate) => candidate.id === dragging!.part); if (!part) return; const next = structuredClone(dragging.transform); const imageBounds = host.parentElement?.getBoundingClientRect() ?? host.getBoundingClientRect(); next.position.x += (x - dragging.startX) / imageBounds.width; next.position.y += (y - dragging.startY) / imageBounds.height; useConfiguratorStore.getState().setAssetTransform(keyFor(part), next); };
     const onUp = (event: PointerEvent) => { if (!dragging || event.pointerId !== dragging.pointerId) return; dragging = null; if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId); };
     const onCapture = (event: Event) => { controlsHidden.current = Boolean((event as CustomEvent<boolean>).detail); };
