@@ -74,6 +74,7 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
   const [ready, setReady] = useState(false);
   const canUsePortal = useSyncExternalStore(() => () => {}, () => true, () => false);
   const controlsHidden = useRef(false);
+  const layerOrderKey = layerOrder.join("|");
 
   const specs = useMemo(() => [
     hook && { id: "hook" as const, product: hook }, wand && { id: "wand" as const, product: wand },
@@ -99,6 +100,7 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
     if (!canvas || !host || !ready) return;
     const context = canvas.getContext("2d"); if (!context) return;
     let frame = 0; let dragging: { part: PartId; pointerId: number; startX: number; startY: number; transform: AssetTransform } | null = null;
+    const orderedLayerIds = layerOrderKey ? layerOrderKey.split("|") : [];
 
     const keyFor = (part: Part) => `image:${part.product.id}:${part.id}`;
     const getTransform = (part: Part) => useConfiguratorStore.getState().assetTransforms[keyFor(part)] ?? blankTransform();
@@ -122,7 +124,7 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
         const left = id.endsWith("left"); return { cx: left ? tl.x - topWidth * .055 : tr.x + topWidth * .055, cy: left ? tl.y : tr.y, width: topWidth * .15, height: topWidth * .15, angle };
       };
 
-      const ordered = [...partsRef.current].sort((a, b) => layerOrder.indexOf(b.product.id) - layerOrder.indexOf(a.product.id));
+      const ordered = [...partsRef.current].sort((a, b) => orderedLayerIds.indexOf(b.product.id) - orderedLayerIds.indexOf(a.product.id));
       placementsRef.current.clear();
       for (const part of ordered) {
         const placement = base(part.id); const transform = getTransform(part);
@@ -164,7 +166,7 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
     const onCapture = (event: Event) => { controlsHidden.current = Boolean((event as CustomEvent<boolean>).detail); };
     canvas.addEventListener("pointerdown", onDown); window.addEventListener("pointermove", onMove, { passive: false }); window.addEventListener("pointerup", onUp); window.addEventListener("pointercancel", onUp); window.addEventListener("asis:quote-capture", onCapture); render();
     return () => { cancelAnimationFrame(frame); canvas.removeEventListener("pointerdown", onDown); window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); window.removeEventListener("pointercancel", onUp); window.removeEventListener("asis:quote-capture", onCapture); };
-  }, [layerOrder, polygon, ready]);
+  }, [layerOrderKey, polygon, ready]);
 
   const selectedKind = selectedPart === "hook" || selectedPart === "wand" ? selectedPart : selectedPart === "curtain" ? "curtain" : selectedPart === "tube" ? "rod" : selectedPart.startsWith("bracket") ? "bracket" : "finial";
   const deleteSelected = { hook: onDeleteHook, wand: onDeleteWand, curtain: onDeleteCurtain, rod: onDeleteRod, bracket: onDeleteBracket, finial: onDeleteFinial }[selectedKind];
