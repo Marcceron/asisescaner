@@ -2,7 +2,7 @@ import type { Product } from "@/domain/types";
 import { materialPresets, fabricPatterns } from "./materials";
 
 const hardware = [
-  { category: "cortinero", name: "Tubo", style: "rod", description: "Tubo recto · accesorios independientes", price: 120000 },
+  { category: "cortinero", name: "Cortinero", style: "rod", description: "Tubo completo · remates integrados", price: 120000 },
   { category: "soportes", name: "Soporte", style: "bracket", description: "Soporte individual con cuna abierta", price: 42000 },
   { category: "remates", name: "Remate Esfera", style: "finial", description: "Par de terminales esféricos", price: 39000 },
   { category: "ganchos", name: "Gancho", style: "hook", description: "Argolla con gancho · pieza individual", price: 1445 },
@@ -15,7 +15,7 @@ export const expandedProducts: Product[] = [
     category: item.category,
     name: `${item.name} · ${materialPresets[material].label}`,
     description: item.description, priceCents: item.price, currency: "MXN",
-    image: `/assets/catalog/${item.style}-${material}.webp`,
+    image: item.style === "rod" ? `/assets/overlays/rod-${material}.png` : `/assets/catalog/${item.style}-${material}.webp`,
     tone: materialPresets[material].color, material, renderStyle: item.style,
     active: true, order: 20 + index, compatibleWith: [],
   }))),
