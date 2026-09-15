@@ -3,18 +3,18 @@ import { expandedProducts } from "./expanded-catalog";
 
 export const products: Product[] = [
   ...expandedProducts,
-  ...(["ganchos", "remates", "varillas"] as const).flatMap((category) =>
+  ...(["ganchos", "varillas"] as const).flatMap((category) =>
     (["metal", "wood", "plastic"] as const).map((material, index): Product => ({
       id: `${category}-${material}`,
       category,
-      name: `${{ ganchos: "Gancho", remates: "Remate", varillas: "Varilla" }[category]} de ${{ metal: "metal", wood: "madera", plastic: "plástico" }[material]}`,
-      description: category === "ganchos" ? "Argolla con gancho · pieza individual" : category === "remates" ? "Par de terminales esféricos" : "Varilla de apertura manual",
-      priceCents: category === "ganchos" ? 1445 : category === "remates" ? 39000 : 34900,
+      name: `${{ ganchos: "Gancho", varillas: "Varilla" }[category]} de ${{ metal: "metal", wood: "madera", plastic: "plástico" }[material]}`,
+      description: category === "ganchos" ? "Argolla con gancho · pieza individual" : "Varilla de apertura manual",
+      priceCents: category === "ganchos" ? 1445 : 34900,
       currency: "MXN", active: true, order: index + 10, compatibleWith: [],
       image: `/assets/${category}.svg`,
       tone: material === "wood" ? "#ac7543" : material === "plastic" ? "#eee9df" : "#8b949e",
       material,
-      renderStyle: category === "ganchos" ? "hook" : category === "remates" ? "finial" : "wand",
+      renderStyle: category === "ganchos" ? "hook" : "wand",
     }))),
   {
     id: "curtain-linen-sand",
@@ -105,16 +105,14 @@ export const products: Product[] = [
     description: "Mayor separación para cortinas con volumen", priceCents: 56000, currency: "MXN",
     image: "/assets/product-white.png", compatibleWith: ["rod-black", "rod-wood", "rod-white"], active: true, order: 2, renderStyle: "bracket",
   },
-  {
-    id: "finial-round", category: "remates", name: "Remate Esfera",
-    description: "Par de remates redondos", priceCents: 39000, currency: "MXN",
-    image: "/assets/product-black.png", compatibleWith: ["rod-black", "rod-wood", "rod-white"], active: true, order: 1, renderStyle: "finial",
-  },
-  {
-    id: "finial-cap", category: "remates", name: "Remate Plano",
-    description: "Par de terminales minimalistas", priceCents: 36000, currency: "MXN",
-    image: "/assets/product-white.png", compatibleWith: ["rod-black", "rod-wood", "rod-white"], active: true, order: 2, renderStyle: "finial",
-  },
+  ...([
+    { id: "cord-white", name: "Cordón Blanco", description: "Cordón trenzado con contrapeso blanco", image: "/assets/catalog/cord-white.png", tone: "#e8e6e0" },
+    { id: "cord-beige", name: "Cordón Beige", description: "Cordón trenzado con contrapeso arena", image: "/assets/catalog/cord-beige.png", tone: "#cbb896" },
+    { id: "cord-black", name: "Cordón Negro", description: "Cordón trenzado con contrapeso negro", image: "/assets/catalog/cord-black.png", tone: "#3b3b3b" },
+  ] as const).map((cord, index): Product => ({
+    ...cord, category: "cordones", priceCents: 24900, currency: "MXN", compatibleWith: [],
+    active: true, order: index + 1, renderStyle: "cord",
+  })),
   {
     id: "hooks-standard",
     category: "ganchos",
@@ -145,7 +143,7 @@ export const categoryLabels = {
   cortinas: "Cortinas",
   cortinero: "Cortinero",
   soportes: "Soportes",
-  remates: "Remates",
+  cordones: "Cordón",
   ganchos: "Ganchos",
   varillas: "Varillas",
 } as const;

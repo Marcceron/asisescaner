@@ -42,6 +42,10 @@ export function AppShell() {
       if (!catalog) return;
       setCatalogProducts(catalog.products);
       setCatalogCategories(catalog.categories);
+      const currentStore = useConfiguratorStore.getState();
+      if (!catalog.categories.some((category: { id: string }) => category.id === currentStore.activeCategory)) {
+        currentStore.setActiveCategory(catalog.categories[0]?.id ?? "cortinas");
+      }
     }).catch(() => {});
   }, []);
 
@@ -70,7 +74,7 @@ export function AppShell() {
   const selectedBracket = selectedProducts.find((product) => product.category === "soportes");
   const selectedHook = selectedProducts.find((product) => product.category === "ganchos");
   const selectedWand = selectedProducts.find((product) => product.category === "varillas");
-  const selectedFinial = selectedProducts.find((product) => product.category === "remates");
+  const selectedCord = selectedProducts.find((product) => product.category === "cordones");
   const windowCenter = useMemo(() => ({
     x: polygon.reduce((sum, point) => sum + point.x, 0) / polygon.length,
     y: polygon.reduce((sum, point) => sum + point.y, 0) / polygon.length,
@@ -192,7 +196,7 @@ export function AppShell() {
         {store.imageData ? (
           <>
             <ImagePlane imageData={store.imageData} imageSize={store.imageSize} focusPoint={windowCenter} viewZoom={viewZoom} panEnabled={panEnabled} panOffset={panOffset} onPan={(delta) => setPanOffset((current) => ({ x: current.x + delta.x, y: current.y + delta.y }))}>
-              {workspaceMode === "editing" && <PerspectiveAssetLayer layerOrder={selectedProducts.map((product) => product.id)} imageData={store.imageData} hook={selectedHook} wand={selectedWand} onDeleteHook={() => { if (selectedHook) store.removeProduct(selectedHook.id); }} onDeleteWand={() => { if (selectedWand) store.removeProduct(selectedWand.id); }} polygon={store.polygon} curtain={selectedCurtain} rod={selectedRod} bracket={selectedBracket} finial={selectedFinial} onDeleteRod={() => { if (selectedRod) store.removeProduct(selectedRod.id); }} onDeleteCurtain={() => { if (selectedCurtain) store.removeProduct(selectedCurtain.id); }} onDeleteBracket={() => { if (selectedBracket) store.removeProduct(selectedBracket.id); }} onDeleteFinial={() => { if (selectedFinial) store.removeProduct(selectedFinial.id); }} />}
+              {workspaceMode === "editing" && <PerspectiveAssetLayer layerOrder={selectedProducts.map((product) => product.id)} imageData={store.imageData} hook={selectedHook} wand={selectedWand} cord={selectedCord} onDeleteHook={() => { if (selectedHook) store.removeProduct(selectedHook.id); }} onDeleteWand={() => { if (selectedWand) store.removeProduct(selectedWand.id); }} onDeleteCord={() => { if (selectedCord) store.removeProduct(selectedCord.id); }} polygon={store.polygon} curtain={selectedCurtain} rod={selectedRod} bracket={selectedBracket} onDeleteRod={() => { if (selectedRod) store.removeProduct(selectedRod.id); }} onDeleteCurtain={() => { if (selectedCurtain) store.removeProduct(selectedCurtain.id); }} onDeleteBracket={() => { if (selectedBracket) store.removeProduct(selectedBracket.id); }} onDeleteFinial={() => {}} />}
               {workspaceMode === "measurement" && referencePrediction && <ReferenceOverlay reference={referencePrediction} onChange={(referenceBox) => setReferencePrediction((current) => current && ({ ...current, referenceBox, detected: false }))} />}
               {workspaceMode === "measurement" && <MeasurementOverlay polygon={store.polygon} widthCm={store.measurement.widthCm} heightCm={store.measurement.heightCm} aspectRatio={store.imageSize.width / store.imageSize.height} onPointChange={store.setPolygonPoint} />}
             </ImagePlane>

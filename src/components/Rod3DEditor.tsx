@@ -12,7 +12,7 @@ import { useConfiguratorStore, type AssetTransform } from "@/store/configurator-
 
 type TransformMode = "translate" | "rotate" | "scale";
 type PartId = "hook" | "wand" | "curtain" | "tube" | "bracket-left" | "bracket-right" | "finial-left" | "finial-right";
-export type RodEditorProps = { imageData: string; layerOrder: string[]; polygon: [Point, Point, Point, Point]; hook?: Product; wand?: Product; rod?: Product; curtain?: Product; bracket?: Product; finial?: Product; onDeleteHook: () => void; onDeleteWand: () => void; onDeleteRod: () => void; onDeleteCurtain: () => void; onDeleteBracket: () => void; onDeleteFinial: () => void };
+export type RodEditorProps = { imageData: string; layerOrder: string[]; polygon: [Point, Point, Point, Point]; hook?: Product; wand?: Product; cord?: Product; rod?: Product; curtain?: Product; bracket?: Product; finial?: Product; onDeleteHook: () => void; onDeleteWand: () => void; onDeleteCord: () => void; onDeleteRod: () => void; onDeleteCurtain: () => void; onDeleteBracket: () => void; onDeleteFinial: () => void };
 
 const labels: Record<PartId, string> = {
   hook: "Gancho", wand: "Varilla",

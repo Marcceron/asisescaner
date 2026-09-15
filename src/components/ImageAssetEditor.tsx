@@ -6,18 +6,18 @@ import type { Point, Product } from "@/domain/types";
 import { useConfiguratorStore, type AssetTransform } from "@/store/configurator-store";
 import type { RodEditorProps } from "./Rod3DEditor";
 
-type PartId = "hook" | "wand" | "curtain" | "tube" | "bracket-left" | "bracket-right" | "finial-left" | "finial-right";
+type PartId = "hook" | "wand" | "cord" | "curtain" | "tube" | "bracket-left" | "bracket-right" | "finial-left" | "finial-right";
 type Part = { id: PartId; product: Product; image: HTMLImageElement; crop?: [number, number, number, number] };
 type CanvasPoint = { x: number; y: number };
 type Quad = [CanvasPoint, CanvasPoint, CanvasPoint, CanvasPoint];
 type Placement = { cx: number; cy: number; width: number; height: number; angle: number; quad?: Quad };
 
-const labels: Record<PartId, string> = { hook: "Gancho", wand: "Varilla", curtain: "Cortina", tube: "Cortinero", "bracket-left": "Soporte izquierdo", "bracket-right": "Soporte derecho", "finial-left": "Remate izquierdo", "finial-right": "Remate derecho" };
+const labels: Record<PartId, string> = { hook: "Gancho", wand: "Varilla", cord: "Cordón", curtain: "Cortina", tube: "Cortinero", "bracket-left": "Soporte izquierdo", "bracket-right": "Soporte derecho", "finial-left": "Remate izquierdo", "finial-right": "Remate derecho" };
 const blankTransform = (): AssetTransform => ({ position: { x: 0, y: 0, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 } });
 
 function overlayUrl(product: Product) {
   const style = product.renderStyle;
-  if (!style || !["wave", "blackout", "sheer", "roller", "rod", "bracket", "finial", "hook", "wand"].includes(style)) return product.image;
+  if (!style || style === "cord" || !["wave", "blackout", "sheer", "roller", "rod", "bracket", "finial", "hook", "wand"].includes(style)) return product.image;
   if (product.id.includes("curtain-grid")) return "/assets/overlays/curtain-grid.png?v=3";
   if (product.id.includes("curtain-stripes")) return "/assets/overlays/curtain-stripes.png?v=3";
   if (style === "wave" || style === "blackout" || style === "sheer" || style === "roller") return "/assets/overlays/curtain-dots.png?v=3";
@@ -64,8 +64,8 @@ function drawImageInQuad(context: CanvasRenderingContext2D, image: HTMLImageElem
   }
 }
 
-export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, finial, hook, wand, onDeleteHook, onDeleteWand, onDeleteRod, onDeleteCurtain, onDeleteBracket, onDeleteFinial }: RodEditorProps) {
-  const initialPart: PartId = rod ? "tube" : curtain ? "curtain" : bracket ? "bracket-left" : finial ? "finial-left" : hook ? "hook" : "wand";
+export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, finial, hook, wand, cord, onDeleteHook, onDeleteWand, onDeleteCord, onDeleteRod, onDeleteCurtain, onDeleteBracket, onDeleteFinial }: RodEditorProps) {
+  const initialPart: PartId = rod ? "tube" : curtain ? "curtain" : bracket ? "bracket-left" : finial ? "finial-left" : hook ? "hook" : wand ? "wand" : "cord";
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const partsRef = useRef<Part[]>([]);
   const placementsRef = useRef(new Map<PartId, Placement>());
@@ -77,12 +77,12 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
   const layerOrderKey = layerOrder.join("|");
 
   const specs = useMemo(() => [
-    hook && { id: "hook" as const, product: hook }, wand && { id: "wand" as const, product: wand },
+    hook && { id: "hook" as const, product: hook }, wand && { id: "wand" as const, product: wand }, cord && { id: "cord" as const, product: cord, crop: [.4, 0, .2, 1] as [number, number, number, number] },
     curtain && { id: "curtain" as const, product: curtain, crop: [.18, .02, .62, .94] as [number, number, number, number] }, rod && { id: "tube" as const, product: rod, crop: [0, .25, 1, .5] as [number, number, number, number] },
     bracket && { id: "bracket-left" as const, product: bracket }, bracket && { id: "bracket-right" as const, product: bracket },
     finial && !rod && { id: "finial-left" as const, product: finial, crop: [0, 0, .5, 1] as [number, number, number, number] },
     finial && !rod && { id: "finial-right" as const, product: finial, crop: [.5, 0, .5, 1] as [number, number, number, number] },
-  ].filter(Boolean) as Array<{ id: PartId; product: Product; crop?: [number, number, number, number] }>, [bracket, curtain, finial, hook, rod, wand]);
+  ].filter(Boolean) as Array<{ id: PartId; product: Product; crop?: [number, number, number, number] }>, [bracket, cord, curtain, finial, hook, rod, wand]);
 
   const availableParts = specs.map(({ id }) => id);
   useEffect(() => { selectedRef.current = selectedPart; }, [selectedPart]);
@@ -119,6 +119,7 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
         if (id === "curtain") return { cx: center.x, cy: center.y, width: topWidth, height: windowHeight, angle: 0, quad: [tl, tr, br, bl] };
         if (id === "tube") return { cx: (tl.x + tr.x) / 2, cy: (tl.y + tr.y) / 2 - topWidth * .035, width: topWidth * 1.18, height: topWidth * .16, angle };
         if (id === "wand") return { cx: tr.x - topWidth * .08, cy: tr.y + windowHeight * .38, width: windowHeight * .58, height: windowHeight * .58, angle: -Math.PI / 4 };
+        if (id === "cord") return { cx: tr.x - topWidth * .035, cy: tr.y + windowHeight * .43, width: windowHeight * .07, height: windowHeight * .86, angle: 0 };
         if (id === "hook") return { cx: tl.x + topWidth * .25, cy: tl.y + topWidth * .02, width: topWidth * .12, height: topWidth * .12, angle };
         if (id.startsWith("bracket")) { const left = id.endsWith("left"); return { cx: left ? tl.x + topWidth * .13 : tr.x - topWidth * .13, cy: (left ? tl.y : tr.y) + topWidth * .035, width: topWidth * .13, height: topWidth * .13, angle }; }
         const left = id.endsWith("left"); return { cx: left ? tl.x - topWidth * .055 : tr.x + topWidth * .055, cy: left ? tl.y : tr.y, width: topWidth * .15, height: topWidth * .15, angle };
@@ -168,8 +169,8 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
     return () => { cancelAnimationFrame(frame); canvas.removeEventListener("pointerdown", onDown); window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); window.removeEventListener("pointercancel", onUp); window.removeEventListener("asis:quote-capture", onCapture); };
   }, [layerOrderKey, polygon, ready]);
 
-  const selectedKind = selectedPart === "hook" || selectedPart === "wand" ? selectedPart : selectedPart === "curtain" ? "curtain" : selectedPart === "tube" ? "rod" : selectedPart.startsWith("bracket") ? "bracket" : "finial";
-  const deleteSelected = { hook: onDeleteHook, wand: onDeleteWand, curtain: onDeleteCurtain, rod: onDeleteRod, bracket: onDeleteBracket, finial: onDeleteFinial }[selectedKind];
+  const selectedKind = selectedPart === "hook" || selectedPart === "wand" || selectedPart === "cord" ? selectedPart : selectedPart === "curtain" ? "curtain" : selectedPart === "tube" ? "rod" : selectedPart.startsWith("bracket") ? "bracket" : "finial";
+  const deleteSelected = { hook: onDeleteHook, wand: onDeleteWand, cord: onDeleteCord, curtain: onDeleteCurtain, rod: onDeleteRod, bracket: onDeleteBracket, finial: onDeleteFinial }[selectedKind];
   const controls = <><div className="gizmoToolbar" aria-label="Controladores de imagen"><select aria-label="Componente" value={selectedPart} onChange={(event) => { const part = event.target.value as PartId; selectedRef.current = part; setSelectedPart(part); }}>{availableParts.map((part) => <option key={part} value={part}>{labels[part]}</option>)}</select><button className="active">Mover</button><button className="danger" onClick={deleteSelected}><img src="/assets/delete.svg" alt="" />Eliminar</button></div><span className="gizmoHint">Moviendo: {labels[selectedPart]} · arrastra el asset para cambiarlo de lugar</span></>;
   return <div className="imageAssetEditor"><canvas ref={canvasRef} className="asset2dCanvas" aria-label="Editor de imágenes de productos" />{canUsePortal && createPortal(controls, document.body)}</div>;
 }

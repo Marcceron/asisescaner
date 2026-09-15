@@ -31,7 +31,7 @@ export type Product = {
   tone?: string;
   material?: MaterialKind;
   pattern?: FabricPattern;
-  renderStyle?: "wave" | "blackout" | "sheer" | "roller" | "rod" | "bracket" | "finial" | "hook" | "wand";
+  renderStyle?: "wave" | "blackout" | "sheer" | "roller" | "rod" | "bracket" | "finial" | "hook" | "wand" | "cord";
   /** Optional optimized GLB/glTF file for the perspective renderer. */
   modelUrl?: string;
 };

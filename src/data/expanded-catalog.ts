@@ -4,7 +4,6 @@ import { materialPresets, fabricPatterns } from "./materials";
 const hardware = [
   { category: "cortinero", name: "Cortinero", style: "rod", description: "Tubo completo · remates integrados", price: 120000 },
   { category: "soportes", name: "Soporte", style: "bracket", description: "Soporte individual con cuna abierta", price: 42000 },
-  { category: "remates", name: "Remate Esfera", style: "finial", description: "Par de terminales esféricos", price: 39000 },
   { category: "ganchos", name: "Gancho", style: "hook", description: "Argolla con gancho · pieza individual", price: 1445 },
   { category: "varillas", name: "Varilla", style: "wand", description: "Varilla con gancho superior y empuñadura", price: 34900 },
 ] as const;

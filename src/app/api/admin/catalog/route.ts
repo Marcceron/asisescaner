@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     try {
       const imageUrl = image instanceof File && image.size ? await save(image, [".png", ".jpg", ".jpeg", ".webp"]) : "/assets/product-white.png";
       const modelUrl = model instanceof File && model.size ? await save(model, [".glb", ".gltf"]) : undefined;
-      const renderStyle = String(form.get("renderStyle") ?? "wave") as "wave" | "blackout" | "sheer" | "roller" | "rod" | "bracket" | "finial" | "hook" | "wand";
+      const renderStyle = String(form.get("renderStyle") ?? "wave") as "wave" | "blackout" | "sheer" | "roller" | "rod" | "bracket" | "finial" | "hook" | "wand" | "cord";
       const rawMaterial = String(form.get("material") ?? "metal");
       if (!Object.hasOwn(materialPresets, rawMaterial)) return Response.json({ error: "Material inválido" }, { status: 400 });
       const material = rawMaterial as MaterialKind;

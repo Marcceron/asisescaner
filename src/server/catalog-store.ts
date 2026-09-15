@@ -12,7 +12,7 @@ const filePath = path.join(process.cwd(), "data", "admin-catalog.json");
 export async function readCatalog(): Promise<CatalogData> {
   let catalog: CatalogData;
   try { catalog = JSON.parse(await readFile(filePath, "utf8")) as CatalogData; }
-  catch { return { categories: Object.entries(categoryLabels).map(([id, label], order) => ({ id, label, order })), products, accessoryCatalogVersion: 2 }; }
+  catch { return { categories: Object.entries(categoryLabels).map(([id, label], order) => ({ id, label, order })), products, accessoryCatalogVersion: 3 }; }
   if ((catalog.accessoryCatalogVersion ?? 0) < 2) {
     // Import the new defaults once, preserving administrator edits and later deletions.
     const additions = catalog.accessoryCatalogVersion === 1 ? expandedProducts : products.filter((item) => item.material);
@@ -23,6 +23,15 @@ export async function readCatalog(): Promise<CatalogData> {
       }
     }
     catalog.accessoryCatalogVersion = 2;
+    await writeCatalog(catalog);
+  }
+  if ((catalog.accessoryCatalogVersion ?? 0) < 3) {
+    catalog.products = catalog.products.filter((product) => product.category !== "remates" && product.category !== "cordones");
+    catalog.products.push(...products.filter((product) => product.category === "cordones"));
+    const categories = catalog.categories.filter((category) => category.id !== "remates" && category.id !== "cordones");
+    categories.splice(Math.min(3, categories.length), 0, { id: "cordones", label: categoryLabels.cordones, order: 3 });
+    catalog.categories = categories.map((category, order) => ({ ...category, order }));
+    catalog.accessoryCatalogVersion = 3;
     await writeCatalog(catalog);
   }
   return catalog;
