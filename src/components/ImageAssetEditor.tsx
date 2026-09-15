@@ -64,7 +64,25 @@ function drawImageInQuad(context: CanvasRenderingContext2D, image: HTMLImageElem
   }
 }
 
-export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, finial, hook, wand, cord, onDeleteHook, onDeleteWand, onDeleteCord, onDeleteRod, onDeleteCurtain, onDeleteBracket, onDeleteFinial }: RodEditorProps) {
+function containsPoint(placement: Placement, point: CanvasPoint) {
+  if (placement.quad) {
+    let inside = false;
+    for (let index = 0, previous = placement.quad.length - 1; index < placement.quad.length; previous = index, index += 1) {
+      const currentPoint = placement.quad[index]; const previousPoint = placement.quad[previous];
+      const crosses = (currentPoint.y > point.y) !== (previousPoint.y > point.y)
+        && point.x < (previousPoint.x - currentPoint.x) * (point.y - currentPoint.y) / (previousPoint.y - currentPoint.y) + currentPoint.x;
+      if (crosses) inside = !inside;
+    }
+    return inside;
+  }
+  const cos = Math.cos(-placement.angle); const sin = Math.sin(-placement.angle);
+  const deltaX = point.x - placement.cx; const deltaY = point.y - placement.cy;
+  const localX = deltaX * cos - deltaY * sin; const localY = deltaX * sin + deltaY * cos;
+  const padding = Math.min(14, Math.max(6, Math.min(placement.width, placement.height) * .18));
+  return Math.abs(localX) <= placement.width / 2 + padding && Math.abs(localY) <= placement.height / 2 + padding;
+}
+
+export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, finial, hook, wand, cord, selectedProductId, onSelectProduct, onDeleteHook, onDeleteWand, onDeleteCord, onDeleteRod, onDeleteCurtain, onDeleteBracket, onDeleteFinial }: RodEditorProps) {
   const initialPart: PartId = rod ? "tube" : curtain ? "curtain" : bracket ? "bracket-left" : finial ? "finial-left" : hook ? "hook" : wand ? "wand" : "cord";
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const partsRef = useRef<Part[]>([]);
@@ -86,6 +104,11 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
 
   const availableParts = specs.map(({ id }) => id);
   useEffect(() => { selectedRef.current = selectedPart; }, [selectedPart]);
+  useEffect(() => {
+    const requested = specs.find((spec) => spec.product.id === selectedProductId)?.id;
+    const next = requested ?? (availableParts.includes(selectedRef.current) ? selectedRef.current : availableParts[0]);
+    if (next && next !== selectedRef.current) { selectedRef.current = next; setSelectedPart(next); }
+  }, [availableParts, selectedProductId, specs]);
 
   useEffect(() => {
     let cancelled = false;
@@ -161,13 +184,26 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
       }
     };
 
-    const onDown = (event: PointerEvent) => { const part = partsRef.current.find((candidate) => candidate.id === selectedRef.current); if (!part) return; const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top; event.preventDefault(); event.stopPropagation(); dragging = { part: part.id, pointerId: event.pointerId, startX: x, startY: y, transform: structuredClone(getTransform(part)) }; canvas.setPointerCapture(event.pointerId); };
+    const onDown = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top;
+      const part = partsRef.current
+        .filter((candidate) => { const placement = placementsRef.current.get(candidate.id); return placement ? containsPoint(placement, { x, y }) : false; })
+        .sort((first, second) => {
+          const firstPlacement = placementsRef.current.get(first.id)!; const secondPlacement = placementsRef.current.get(second.id)!;
+          return firstPlacement.width * firstPlacement.height - secondPlacement.width * secondPlacement.height;
+        })[0];
+      if (!part) return;
+      event.preventDefault(); event.stopPropagation();
+      selectedRef.current = part.id; setSelectedPart(part.id); onSelectProduct?.(part.product.id);
+      dragging = { part: part.id, pointerId: event.pointerId, startX: x, startY: y, transform: structuredClone(getTransform(part)) };
+      canvas.setPointerCapture(event.pointerId);
+    };
     const onMove = (event: PointerEvent) => { if (!dragging || event.pointerId !== dragging.pointerId) return; event.preventDefault(); const rect = canvas.getBoundingClientRect(); const x = event.clientX - rect.left; const y = event.clientY - rect.top; const part = partsRef.current.find((candidate) => candidate.id === dragging!.part); if (!part) return; const next = structuredClone(dragging.transform); const imageBounds = host.parentElement?.getBoundingClientRect() ?? host.getBoundingClientRect(); next.position.x += (x - dragging.startX) / imageBounds.width; next.position.y += (y - dragging.startY) / imageBounds.height; useConfiguratorStore.getState().setAssetTransform(keyFor(part), next); };
     const onUp = (event: PointerEvent) => { if (!dragging || event.pointerId !== dragging.pointerId) return; dragging = null; if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId); };
     const onCapture = (event: Event) => { controlsHidden.current = Boolean((event as CustomEvent<boolean>).detail); };
     canvas.addEventListener("pointerdown", onDown); window.addEventListener("pointermove", onMove, { passive: false }); window.addEventListener("pointerup", onUp); window.addEventListener("pointercancel", onUp); window.addEventListener("asis:quote-capture", onCapture); render();
     return () => { cancelAnimationFrame(frame); canvas.removeEventListener("pointerdown", onDown); window.removeEventListener("pointermove", onMove); window.removeEventListener("pointerup", onUp); window.removeEventListener("pointercancel", onUp); window.removeEventListener("asis:quote-capture", onCapture); };
-  }, [layerOrderKey, polygon, ready]);
+  }, [layerOrderKey, onSelectProduct, polygon, ready]);
 
   const selectedKind = selectedPart === "hook" || selectedPart === "wand" || selectedPart === "cord" ? selectedPart : selectedPart === "curtain" ? "curtain" : selectedPart === "tube" ? "rod" : selectedPart.startsWith("bracket") ? "bracket" : "finial";
   const deleteSelected = { hook: onDeleteHook, wand: onDeleteWand, cord: onDeleteCord, curtain: onDeleteCurtain, rod: onDeleteRod, bracket: onDeleteBracket, finial: onDeleteFinial }[selectedKind];

@@ -35,6 +35,7 @@ export function AppShell() {
   const [referencePrediction, setReferencePrediction] = useState<StandardReferencePrediction | null>(null);
   const [catalogProducts, setCatalogProducts] = useState<Product[]>(defaultProducts);
   const [draggedProductId, setDraggedProductId] = useState<string | null>(null);
+  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
   const [catalogCategories, setCatalogCategories] = useState(Object.entries(categoryLabels).map(([id, label], order) => ({ id, label, order })));
 
   useEffect(() => {
@@ -68,6 +69,9 @@ export function AppShell() {
     }),
     [catalogProducts, store.selectedItems],
   );
+  const activeSelectedAssetId = selectedProducts.some((product) => product.id === selectedAssetId)
+    ? selectedAssetId
+    : selectedProducts[0]?.id ?? null;
   const totalCents = selectedProducts.reduce((sum, item) => sum + item.priceCents * item.quantity, 0);
   const selectedCurtain = selectedProducts.find((product) => product.category === "cortinas");
   const selectedRod = selectedProducts.find((product) => product.category === "cortinero");
@@ -187,7 +191,7 @@ export function AppShell() {
               activeCategory={store.activeCategory}
               selectedItems={store.selectedItems}
               onCategoryChange={store.setActiveCategory}
-              onToggle={(productId, category) => { store.toggleProduct(productId, category); setWorkspaceMode("editing"); }}
+              onToggle={(productId, category) => { const removing = store.selectedItems.some((item) => item.productId === productId); store.toggleProduct(productId, category); setSelectedAssetId(removing ? null : productId); setWorkspaceMode("editing"); }}
               products={catalogProducts}
               categories={catalogCategories}
             />
@@ -210,7 +214,7 @@ export function AppShell() {
         {store.imageData ? (
           <>
             <ImagePlane imageData={store.imageData} imageSize={store.imageSize} focusPoint={windowCenter} viewZoom={viewZoom} panEnabled={panEnabled} panOffset={panOffset} onPan={(delta) => setPanOffset((current) => ({ x: current.x + delta.x, y: current.y + delta.y }))}>
-              {workspaceMode === "editing" && <PerspectiveAssetLayer layerOrder={selectedProducts.map((product) => product.id)} imageData={store.imageData} hook={selectedHook} wand={selectedWand} cord={selectedCord} onDeleteHook={() => { if (selectedHook) store.removeProduct(selectedHook.id); }} onDeleteWand={() => { if (selectedWand) store.removeProduct(selectedWand.id); }} onDeleteCord={() => { if (selectedCord) store.removeProduct(selectedCord.id); }} polygon={store.polygon} curtain={selectedCurtain} rod={selectedRod} bracket={selectedBracket} onDeleteRod={() => { if (selectedRod) store.removeProduct(selectedRod.id); }} onDeleteCurtain={() => { if (selectedCurtain) store.removeProduct(selectedCurtain.id); }} onDeleteBracket={() => { if (selectedBracket) store.removeProduct(selectedBracket.id); }} onDeleteFinial={() => {}} />}
+              {workspaceMode === "editing" && <PerspectiveAssetLayer layerOrder={selectedProducts.map((product) => product.id)} imageData={store.imageData} hook={selectedHook} wand={selectedWand} cord={selectedCord} selectedProductId={activeSelectedAssetId} onSelectProduct={setSelectedAssetId} onDeleteHook={() => { if (selectedHook) store.removeProduct(selectedHook.id); }} onDeleteWand={() => { if (selectedWand) store.removeProduct(selectedWand.id); }} onDeleteCord={() => { if (selectedCord) store.removeProduct(selectedCord.id); }} polygon={store.polygon} curtain={selectedCurtain} rod={selectedRod} bracket={selectedBracket} onDeleteRod={() => { if (selectedRod) store.removeProduct(selectedRod.id); }} onDeleteCurtain={() => { if (selectedCurtain) store.removeProduct(selectedCurtain.id); }} onDeleteBracket={() => { if (selectedBracket) store.removeProduct(selectedBracket.id); }} onDeleteFinial={() => {}} />}
               {workspaceMode === "measurement" && referencePrediction && <ReferenceOverlay reference={referencePrediction} onChange={(referenceBox) => setReferencePrediction((current) => current && ({ ...current, referenceBox, detected: false }))} />}
               {workspaceMode === "measurement" && <MeasurementOverlay polygon={store.polygon} widthCm={store.measurement.widthCm} heightCm={store.measurement.heightCm} aspectRatio={store.imageSize.width / store.imageSize.height} onPointChange={store.setPolygonPoint} />}
             </ImagePlane>
@@ -248,20 +252,21 @@ export function AppShell() {
           <span>Capas:<small> izquierda = frente</small></span>
           <div className="selectionItems" role="list" aria-label="Orden de capas de assets">
             {selectedProducts.length ? selectedProducts.map((product, index) => (
-              <div className={`selectionThumbnail ${draggedProductId === product.id ? "dragging" : ""}`} key={product.id} draggable
+              <div className={`selectionThumbnail ${activeSelectedAssetId === product.id ? "selected" : ""} ${draggedProductId === product.id ? "dragging" : ""}`} key={product.id} draggable
                 role="listitem" tabIndex={0} aria-label={`${product.name}, capa ${index + 1} de ${selectedProducts.length}`}
-                title={`${product.name} · arrastra para ordenar · izquierda = frente`}
+                title={`${product.name} · clic para editar · arrastra para ordenar · izquierda = frente`}
+                onClick={() => { setSelectedAssetId(product.id); setPanEnabled(false); setWorkspaceMode("editing"); }}
                 onDragStart={(event) => { setDraggedProductId(product.id); event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/plain", product.id); }}
                 onDragOver={(event) => { event.preventDefault(); event.dataTransfer.dropEffect = "move"; }}
                 onDrop={(event) => { event.preventDefault(); const source = event.dataTransfer.getData("text/plain") || draggedProductId; if (source) store.reorderSelectedItem(source, product.id); setDraggedProductId(null); }}
                 onDragEnd={() => setDraggedProductId(null)}
-                onKeyDown={(event) => { if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return; event.preventDefault(); const target = selectedProducts[index + (event.key === "ArrowLeft" ? -1 : 1)]; if (target) store.reorderSelectedItem(product.id, target.id); }}>
+                onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedAssetId(product.id); setPanEnabled(false); setWorkspaceMode("editing"); return; } if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return; event.preventDefault(); const target = selectedProducts[index + (event.key === "ArrowLeft" ? -1 : 1)]; if (target) store.reorderSelectedItem(product.id, target.id); }}>
                 <img src={product.image} alt={product.name} />
                 <span className="layerControls">
-                  <button type="button" disabled={index === 0} onClick={() => store.reorderSelectedItem(product.id, selectedProducts[0].id)} aria-label={`Traer ${product.name} al frente`} title="Traer al frente">←</button>
-                  <button type="button" disabled={index === selectedProducts.length - 1} onClick={() => store.reorderSelectedItem(product.id, selectedProducts.at(-1)!.id)} aria-label={`Enviar ${product.name} atrás`} title="Enviar atrás">→</button>
+                  <button type="button" disabled={index === 0} onClick={(event) => { event.stopPropagation(); store.reorderSelectedItem(product.id, selectedProducts[0].id); }} aria-label={`Traer ${product.name} al frente`} title="Traer al frente">←</button>
+                  <button type="button" disabled={index === selectedProducts.length - 1} onClick={(event) => { event.stopPropagation(); store.reorderSelectedItem(product.id, selectedProducts.at(-1)!.id); }} aria-label={`Enviar ${product.name} atrás`} title="Enviar atrás">→</button>
                 </span>
-                <button onClick={() => store.removeProduct(product.id)} aria-label={`Quitar ${product.name}`}>×</button>
+                <button onClick={(event) => { event.stopPropagation(); store.removeProduct(product.id); }} aria-label={`Quitar ${product.name}`}>×</button>
               </div>
             )) : <small>Sin piezas</small>}
           </div>

@@ -107,13 +107,15 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .productCard {
   position: relative; display: flex; min-width: 0; flex-direction: column; gap: 7px;
   padding: 8px; border: 3px solid transparent; border-radius: var(--radius-md);
-  color: white; text-align: left; background: rgba(0,0,0,.2); cursor: pointer;
+  color: white; text-align: left; background: rgba(0,0,0,.2); cursor: pointer; transition: border-color .16s, background .16s, transform .16s, box-shadow .16s;
 }
-.productCard.selected { border-color: var(--blue); }
+.productCard:hover { transform: translateY(-1px); background: rgba(255,255,255,.07); }
+.productCard.selected { border-color: var(--blue); background: rgba(0,115,255,.12); box-shadow: 0 0 0 1px rgba(0,115,255,.22), 0 8px 24px rgba(0,0,0,.18); }
+.productCard.selected::after { content: "✓"; position: absolute; z-index: 2; top: 13px; right: 13px; display: grid; width: 23px; height: 23px; place-items: center; border: 2px solid white; border-radius: 50%; color: white; background: var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,.4); font-size: 12px; }
 .productCard strong, .productCard span { font-size: 14px; }
 .productCard small { color: #bbb; line-height: 1.25; }
 .productImage { display: block; width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: var(--radius-sm); }
-.productImage img { width: 100%; height: 100%; object-fit: cover; }
+.productImage img { width: 100%; height: 100%; padding: 5px; object-fit: contain; }
 
 .emptyPrompt { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 34px; text-align: center; }
 .emptyPrompt p { max-width: 245px; margin: 0; font-size: 18px; font-weight: 600; }
@@ -208,10 +210,11 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .selectionThumbnail:focus-visible { outline: 3px solid rgba(74,158,255,.9); outline-offset: 2px; }
 .selectionThumbnail.dragging { opacity: .4; transform: scale(.92); }
 .selectionThumbnail:hover { box-shadow: 0 0 0 2px rgba(255,255,255,.28); }
+.selectionThumbnail.selected { box-shadow: 0 0 0 3px var(--blue), 0 5px 16px rgba(0,115,255,.32); transform: translateY(-2px); }
 .selectionThumbnail > img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
 .selectionThumbnail > button { position: absolute; top: 2px; right: 2px; display: grid; width: 16px; height: 16px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: white; background: var(--danger); box-shadow: 0 1px 4px rgba(0,0,0,.45); font-size: 12px; line-height: 1; cursor: pointer; }
 .layerControls { position: absolute; left: 2px; right: 2px; bottom: 2px; display: flex; justify-content: space-between; opacity: 0; transition: opacity .15s; }
-.selectionThumbnail:hover .layerControls, .selectionThumbnail:focus-within .layerControls { opacity: 1; }
+.selectionThumbnail:hover .layerControls, .selectionThumbnail:focus-within .layerControls, .selectionThumbnail.selected .layerControls { opacity: 1; }
 .layerControls button { display: grid; width: 16px; height: 16px; padding: 0; place-items: center; border: 0; border-radius: 5px; color: white; background: rgba(15,15,15,.84); font-size: 11px; line-height: 1; cursor: pointer; }
 .layerControls button:disabled { opacity: .28; cursor: not-allowed; }
 @media (hover: none) { .layerControls { opacity: 1; } }
