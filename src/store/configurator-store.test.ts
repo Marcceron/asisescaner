@@ -12,6 +12,21 @@ describe("accessory finish selection", () => {
       .toEqual(["curtain-dots-studio", "second-finish"]);
   });
 
+  it("keeps a cord's layer and placement when its color changes", () => {
+    const store = useConfiguratorStore.getState();
+    store.toggleProduct("curtain", "cortinas");
+    store.toggleProduct("cord-white", "cordones");
+    store.toggleProduct("rod", "cortinero");
+    const transform = {
+      position: { x: .08, y: .12, z: 0 }, rotation: { x: 0, y: 0, z: 0 }, scale: { x: 1, y: 1, z: 1 },
+    };
+    useConfiguratorStore.getState().setAssetTransform("image:cord-white:cord", transform);
+    useConfiguratorStore.getState().toggleProduct("cord-black", "cordones");
+    const state = useConfiguratorStore.getState();
+    expect(state.selectedItems.map((item) => item.productId)).toEqual(["curtain", "cord-black", "rod"]);
+    expect(state.assetTransforms["image:cord-black:cord"]).toEqual(transform);
+  });
+
   it("reorders selected assets and supports undo and redo", () => {
     const store = useConfiguratorStore.getState();
     store.toggleProduct("curtain", "cortinas");

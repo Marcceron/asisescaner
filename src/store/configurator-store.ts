@@ -97,10 +97,25 @@ export const useConfiguratorStore = create<ConfiguratorState>()(
               selectionPast: [...state.selectionPast, state.selectedItems].slice(-40), selectionFuture: [],
             };
           }
-          // The editor renders one design per category; switching finish must replace it.
-          const next = state.selectedItems.filter((item) => item.category !== category);
+          // Switching a finish must preserve both its layer and its placement.
+          const categoryIndex = state.selectedItems.findIndex((item) => item.category === category);
+          const replaced = categoryIndex >= 0 ? state.selectedItems[categoryIndex] : null;
+          const next = [...state.selectedItems];
+          const selection = { productId, quantity: 1, category };
+          if (categoryIndex >= 0) next[categoryIndex] = selection;
+          else next.push(selection);
+          const assetTransforms = { ...state.assetTransforms };
+          if (replaced) {
+            for (const [key, transform] of Object.entries(state.assetTransforms)) {
+              const imagePrefix = `image:${replaced.productId}:`;
+              const modelPrefix = `${replaced.productId}:`;
+              if (key.startsWith(imagePrefix)) assetTransforms[`image:${productId}:${key.slice(imagePrefix.length)}`] = transform;
+              else if (key.startsWith(modelPrefix)) assetTransforms[`${productId}:${key.slice(modelPrefix.length)}`] = transform;
+            }
+          }
           return {
-            selectedItems: [...next, { productId, quantity: 1, category }],
+            selectedItems: next,
+            assetTransforms,
             selectionPast: [...state.selectionPast, state.selectedItems].slice(-40), selectionFuture: [],
           };
         }),

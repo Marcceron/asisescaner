@@ -147,6 +147,20 @@ export function AppShell() {
     image.src = dataUrl;
   }
 
+  async function captureQuoteScene() {
+    setPanEnabled(false);
+    if (workspaceMode !== "editing") {
+      setWorkspaceMode("editing");
+    }
+    for (let attempt = 0; attempt < 120; attempt += 1) {
+      const renderer = document.querySelector<HTMLCanvasElement>(".asset2dCanvas, .rod3dCanvas");
+      if (renderer && renderer.width > 1 && renderer.height > 1 && renderer.dataset.ready !== "false") break;
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    }
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+    return captureConfiguredSceneJpeg();
+  }
+
   return (
     <main className={`appShell ${store.imageData ? "hasImage" : "empty"}`}>
       <aside className={`sidePanel ${mobilePanelOpen ? "mobileOpen" : ""}`}>
@@ -243,6 +257,10 @@ export function AppShell() {
                 onDragEnd={() => setDraggedProductId(null)}
                 onKeyDown={(event) => { if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return; event.preventDefault(); const target = selectedProducts[index + (event.key === "ArrowLeft" ? -1 : 1)]; if (target) store.reorderSelectedItem(product.id, target.id); }}>
                 <img src={product.image} alt={product.name} />
+                <span className="layerControls">
+                  <button type="button" disabled={index === 0} onClick={() => store.reorderSelectedItem(product.id, selectedProducts[0].id)} aria-label={`Traer ${product.name} al frente`} title="Traer al frente">←</button>
+                  <button type="button" disabled={index === selectedProducts.length - 1} onClick={() => store.reorderSelectedItem(product.id, selectedProducts.at(-1)!.id)} aria-label={`Enviar ${product.name} atrás`} title="Enviar atrás">→</button>
+                </span>
                 <button onClick={() => store.removeProduct(product.id)} aria-label={`Quitar ${product.name}`}>×</button>
               </div>
             )) : <small>Sin piezas</small>}
@@ -253,7 +271,7 @@ export function AppShell() {
       </footer>
 
       <CameraCapture open={cameraOpen} onClose={() => setCameraOpen(false)} onCapture={handleCapture} />
-      <QuoteDialog open={quoteOpen} onClose={() => setQuoteOpen(false)} imageData={store.imageData} captureScene={captureConfiguredSceneJpeg} measurement={store.measurement} selectedItems={store.selectedItems} products={catalogProducts} />
+      <QuoteDialog open={quoteOpen} onClose={() => setQuoteOpen(false)} imageData={store.imageData} captureScene={captureQuoteScene} measurement={store.measurement} selectedItems={store.selectedItems} products={catalogProducts} />
     </main>
   );
 }

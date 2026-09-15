@@ -11,7 +11,7 @@ async function thumbnailAsJpeg(source: string) {
       const canvas = document.createElement("canvas"); canvas.width = 240; canvas.height = 240;
       const context = canvas.getContext("2d"); if (!context) return resolve(null);
       context.fillStyle = "#f2f2f2"; context.fillRect(0, 0, 240, 240);
-      const scale = Math.max(240 / image.naturalWidth, 240 / image.naturalHeight);
+      const scale = Math.min(216 / image.naturalWidth, 216 / image.naturalHeight);
       const width = image.naturalWidth * scale; const height = image.naturalHeight * scale;
       context.drawImage(image, (240 - width) / 2, (240 - height) / 2, width, height);
       resolve(canvas.toDataURL("image/jpeg", .86));
