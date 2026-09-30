@@ -98,8 +98,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 }
 .dimensions input { width: 48px; padding: 0; border: 0; color: white; background: transparent; font-weight: 600; text-align: center; }
 .referenceRow { padding-top: 8px; border-top: 1px solid var(--line); }
-.referenceRow > span { flex: 1; font-size: 12px; }
 .referenceRow select { min-width: 86px; padding: 8px 6px; border: 0; border-radius: var(--radius-md); color: white; background: rgba(179,179,179,.18); font-size: 12px; font-weight: 600; }
+.referenceRow .referenceSourceSelect { flex: 1; min-width: 0; }
 .dimensions > small { color: var(--muted); font-size: 11px; line-height: 1.35; }
 .measurementStatus { display: block; padding: 7px 9px; border-radius: 9px; background: rgba(255,255,255,.055); }
 .measurementStatus.ready { color: #a9efc6; background: rgba(31,173,96,.12); }
@@ -222,20 +222,17 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .zoomStatus { position: absolute; z-index: 3; right: 23px; top: calc(50% + 129px); min-width: 40px; padding: 5px 7px; border-radius: 8px; color: #ddd; background: rgba(15,15,15,.72); backdrop-filter: blur(20px); font-size: 11px; text-align: center; }
 
 .summaryBar { position: absolute; left: 375px; right: 0; bottom: 0; height: 78px; z-index: 10; display: flex; align-items: center; min-width: 0; background: var(--panel); backdrop-filter: blur(32px); border-top: 1px solid var(--line); }
-.selectionSummary { display: flex; min-width: 0; flex: 1; align-items: center; gap: 20px; padding: 12px 20px; }
-.selectionSummary > span, .total > span { font-size: 14px; font-weight: 600; }
-.selectionSummary > span { display: flex; max-width: 190px; flex-direction: column; white-space: nowrap; }
-.selectionSummary > span strong { max-width: 190px; overflow: hidden; color: white; font-size: 13px; text-overflow: ellipsis; }
-.selectionSummary > span small { color: var(--muted); font-size: 10px; font-weight: 400; }
-.selectionItems { display: flex; min-width: 0; gap: 10px; overflow-x: auto; }
+.selectionSummary { display: flex; min-width: 0; flex: 1; align-items: center; gap: 16px; padding: 10px 20px; }
+.layersTitle, .total > span { flex: 0 0 auto; color: white; font-size: 14px; font-weight: 600; }
+.selectionItems { display: flex; min-width: 0; gap: 12px; overflow-x: auto; padding: 2px 3px 4px; }
 .selectionItems small { color: var(--muted); }
-.selectionThumbnail { position: relative; flex: 0 0 auto; width: 42px; height: 42px; border-radius: var(--radius-sm); background: #444; cursor: grab; touch-action: none; transition: opacity .15s, transform .15s, box-shadow .15s; }
+.selectionThumbnail { position: relative; flex: 0 0 auto; width: 54px; height: 54px; overflow: visible; border: 1px solid rgba(255,255,255,.18); border-radius: 10px; background: #444; cursor: grab; touch-action: none; transition: opacity .15s, transform .15s, box-shadow .15s; }
 .selectionThumbnail:active { cursor: grabbing; }
 .selectionThumbnail:focus-visible { outline: 3px solid rgba(74,158,255,.9); outline-offset: 2px; }
 .selectionThumbnail.dragging { opacity: .4; transform: scale(.92); }
 .selectionThumbnail:hover { box-shadow: 0 0 0 2px rgba(255,255,255,.28); }
 .selectionThumbnail.selected { box-shadow: 0 0 0 3px var(--blue), 0 5px 16px rgba(0,115,255,.32); transform: translateY(-2px); }
-.selectionThumbnail > img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
+.selectionThumbnail > img { width: 100%; height: 100%; padding: 3px; border-radius: inherit; object-fit: contain; background: rgba(255,255,255,.06); }
 .selectionThumbnail > button { position: absolute; top: 2px; right: 2px; display: grid; width: 17px; height: 17px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: white; background: var(--danger); box-shadow: 0 1px 4px rgba(0,0,0,.45); line-height: 1; cursor: pointer; }
 .selectionThumbnail > button .materialIcon, .layerControls .materialIcon { font-size: 12px; }
 .layerControls { position: absolute; left: 2px; right: 2px; bottom: 2px; display: flex; justify-content: space-between; opacity: 0; transition: opacity .15s; }
