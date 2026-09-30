@@ -174,15 +174,22 @@ export function AppShell() {
           <button className="mobileClose" onClick={() => setMobilePanelOpen(false)} aria-label="Cerrar catálogo">×</button>
         </header>
 
+        <nav className="workflowSteps" aria-label="Pasos del configurador">
+          <button className={!quoteOpen && workspaceMode === "measurement" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("measurement"); }}><span>1</span>Medir</button>
+          <button className={!quoteOpen && workspaceMode === "editing" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("editing"); }} disabled={!store.imageData}><span>2</span>Diseñar</button>
+          <button className={quoteOpen ? "active" : ""} onClick={() => setQuoteOpen(true)} disabled={!store.imageData}><span>3</span>Cotizar</button>
+        </nav>
+
         <section className="dimensions" aria-labelledby="dimensions-title">
-          <div className="dimensionRow"><span id="dimensions-title">Dimensiones</span>
-            <label>L <input aria-label="Ancho en centímetros" inputMode="decimal" value={store.measurement.widthCm || ""} placeholder="0" onChange={(e) => store.patchMeasurement({ widthCm: Number(e.target.value) || 0 })} /> CM</label>
-            <label>A <input aria-label="Alto en centímetros" inputMode="decimal" value={store.measurement.heightCm || ""} placeholder="0" onChange={(e) => store.patchMeasurement({ heightCm: Number(e.target.value) || 0 })} /> CM</label>
+          <div className="panelSectionHeading"><span>1</span><div><strong id="dimensions-title">Mide tu ventana</strong><small>Ajusta los nodos y confirma una medida real</small></div></div>
+          <div className="dimensionInputs">
+            <label><span>Ancho</span><div><input aria-label="Ancho en centímetros" inputMode="decimal" value={store.measurement.widthCm || ""} placeholder="0" onChange={(e) => store.patchMeasurement({ widthCm: Number(e.target.value) || 0 })} /><small>cm</small></div></label>
+            <label><span>Alto</span><div><input aria-label="Alto en centímetros" inputMode="decimal" value={store.measurement.heightCm || ""} placeholder="0" onChange={(e) => store.patchMeasurement({ heightCm: Number(e.target.value) || 0 })} /><small>cm</small></div></label>
           </div>
-          {store.imageData && !referencePrediction && <div className="dimensionRow referenceRow"><span>Medida conocida</span><select aria-label="Segmento de referencia" value={knownEdge} onChange={(event) => setKnownEdge(event.target.value as MeasurementEdge)}><option value="width">Ancho (L)</option><option value="height">Alto (A)</option></select><label>{knownEdge === "width" ? "L" : "A"} <input aria-label="Medida real de referencia" inputMode="decimal" value={knownWidthCm} placeholder="—" onChange={(e) => setKnownWidthCm(e.target.value === "" ? "" : Number(e.target.value))} /> CM</label></div>}
-          {store.imageData && !referencePrediction && <button className="addReferenceButton" onClick={addManualReference}>Calibrar con un objeto</button>}
+          {store.imageData && !referencePrediction && <div className="dimensionRow referenceRow"><span>Calibrar con</span><select aria-label="Segmento de referencia" value={knownEdge} onChange={(event) => setKnownEdge(event.target.value as MeasurementEdge)}><option value="width">Ancho</option><option value="height">Alto</option></select><label><input aria-label="Medida real de referencia" inputMode="decimal" value={knownWidthCm} placeholder="Medida" onChange={(e) => setKnownWidthCm(e.target.value === "" ? "" : Number(e.target.value))} /> CM</label></div>}
+          {store.imageData && !referencePrediction && <button className="addReferenceButton" onClick={addManualReference}>+ Usar un objeto de referencia</button>}
           {referencePrediction && <div className="referenceEditor"><div><strong>{referencePrediction.detected ? "Referencia detectada" : "Referencia manual"}</strong><button onClick={() => { setReferencePrediction(null); setKnownWidthCm(""); }}>Quitar</button></div><label>Objeto<select aria-label="Tipo de referencia" value={referencePrediction.object} onChange={(event) => { const object = event.target.value as ReferenceKind; const preset = referencePresets[object]; setReferencePrediction((current) => current && ({ ...current, object, label: preset.label, referenceHeightCm: preset.heightCm, detected: false, confidence: .85 })); }}><option value="switch-plate">Apagador / contacto</option><option value="cup">Taza</option><option value="bottle">Botella</option><option value="custom">Otro objeto</option></select></label><label>Alto real<input aria-label="Altura real del objeto" type="number" min="1" max="200" step="0.1" value={referencePrediction.referenceHeightCm} onChange={(event) => setReferencePrediction((current) => current && ({ ...current, referenceHeightCm: Number(event.target.value) || 1, detected: false, confidence: .95 }))} /> CM</label><small>Arrastra el recuadro y sus nodos hasta cubrir exactamente el objeto.</small></div>}
-          {store.imageData && <small>{store.measurement.calibrated ? `${store.measurement.perspectiveCorrected ? "Perspectiva corregida" : "Proporción frontal"} · diagonal ${store.measurement.diagonalCm} cm · margen aproximado ±${store.measurement.errorMarginPercent}%` : "Ingresa una medida real para calcular la dimensión faltante"}</small>}
+          {store.imageData && <small className={store.measurement.calibrated ? "measurementStatus ready" : "measurementStatus"}>{store.measurement.calibrated ? `✓ Medición calculada · margen aproximado ±${store.measurement.errorMarginPercent}%` : "Indica una medida real para calcular el tamaño"}</small>}
         </section>
 
         {store.imageData ? (
@@ -205,7 +212,7 @@ export function AppShell() {
 
         <div className="sideAction">
           <button className="primaryButton" onClick={() => { if (store.imageData) { setMobilePanelOpen(false); setWorkspaceMode("editing"); } else setCameraOpen(true); }}>
-            {store.imageData ? "Agregar a la ventana" : "Tomar una foto"}
+            {store.imageData ? "Ver diseño en la ventana →" : "Tomar una foto"}
           </button>
         </div>
       </aside>
@@ -219,10 +226,11 @@ export function AppShell() {
               {workspaceMode === "measurement" && <MeasurementOverlay polygon={store.polygon} widthCm={store.measurement.widthCm} heightCm={store.measurement.heightCm} aspectRatio={store.imageSize.width / store.imageSize.height} onPointChange={store.setPolygonPoint} />}
             </ImagePlane>
             <div className="modePill" aria-live="polite">
-              <span>{isDetecting ? "Detectando ventana…" : workspaceMode === "measurement" ? "Modo Medición" : "Modo Edición"}</span>
+              <span>{isDetecting ? "Detectando ventana…" : workspaceMode === "measurement" ? "Medir ventana" : "Personalizar"}</span>
               <button className={workspaceMode === "measurement" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("measurement"); }} aria-label="Modo Medición" aria-pressed={workspaceMode === "measurement"} title="Ajustar las cuatro esquinas y calcular medidas."><img src="/assets/resize.svg" alt="" width="24" height="24" /></button>
               <button className={workspaceMode === "editing" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("editing"); }} aria-label="Modo Edición" aria-pressed={workspaceMode === "editing"} title="Colocar los assets sobre la ventana."><img src="/assets/edit.svg" alt="" width="18" height="18" /></button>
             </div>
+            <p className="stageGuide">{workspaceMode === "measurement" ? "Arrastra los 4 puntos hasta las esquinas de la ventana" : selectedProducts.length ? "Selecciona una pieza y arrástrala para acomodarla" : "Elige productos en el panel izquierdo para comenzar"}</p>
             <div className="floatingTools" aria-label="Herramientas">
               <button onClick={() => setCameraOpen(true)} aria-label="Tomar otra fotografía"><img src="/assets/camera.svg" alt="" width="28" height="28" /></button>
               <button onClick={() => { setPanEnabled(false); setWorkspaceMode("measurement"); }} aria-label="Ajustar medición" aria-pressed={!panEnabled && workspaceMode === "measurement"}><img src="/assets/cursor.svg" alt="" width="28" height="28" /></button>
@@ -249,7 +257,7 @@ export function AppShell() {
       <footer className="summaryBar">
         <button className="mobileCatalogButton" onClick={() => setMobilePanelOpen(true)}>Personalizar</button>
         <div className="selectionSummary">
-          <span>Capas:<small> izquierda = frente</small></span>
+          <span>{activeSelectedAssetId ? "Editando" : "Productos"}<strong>{selectedProducts.find((product) => product.id === activeSelectedAssetId)?.name ?? "Sin selección"}</strong><small>Arrastra las miniaturas para ordenar las capas</small></span>
           <div className="selectionItems" role="list" aria-label="Orden de capas de assets">
             {selectedProducts.length ? selectedProducts.map((product, index) => (
               <div className={`selectionThumbnail ${activeSelectedAssetId === product.id ? "selected" : ""} ${draggedProductId === product.id ? "dragging" : ""}`} key={product.id} draggable

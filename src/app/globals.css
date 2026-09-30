@@ -59,12 +59,28 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .brand span { font-size: 15px; letter-spacing: .04em; text-transform: uppercase; }
 .brand strong { font-size: 22px; line-height: 1.1; }
 .mobileClose { display: none; }
+.workflowSteps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 0 20px 12px; border-bottom: 1px solid var(--line); }
+.workflowSteps button { display: flex; min-width: 0; align-items: center; gap: 6px; padding: 7px 8px; border: 0; border-radius: 10px; color: #aaa; background: rgba(255,255,255,.055); font-size: 12px; cursor: pointer; }
+.workflowSteps button span { display: grid; flex: 0 0 auto; width: 20px; height: 20px; place-items: center; border-radius: 50%; color: #bbb; background: rgba(255,255,255,.1); font-size: 10px; }
+.workflowSteps button.active { color: white; background: rgba(0,115,255,.2); }
+.workflowSteps button.active span { color: white; background: var(--blue); }
+.workflowSteps button:disabled { opacity: .42; cursor: not-allowed; }
 
 .dimensions {
   display: flex; flex-direction: column; gap: 8px;
   padding: 12px 20px;
-  border-block: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
+.panelSectionHeading { display: flex; align-items: center; gap: 9px; }
+.panelSectionHeading > span, .catalogHeading > span { display: grid; flex: 0 0 auto; width: 28px; height: 28px; place-items: center; border-radius: 50%; color: white; background: var(--blue); font-size: 12px; font-weight: 600; }
+.panelSectionHeading > div, .catalogHeading > div { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
+.panelSectionHeading strong { font-size: 15px; }
+.panelSectionHeading small, .catalogHeading p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.25; }
+.dimensionInputs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.dimensions .dimensionInputs > label { align-items: center; justify-content: space-between; padding: 8px 10px; color: #bbb; }
+.dimensionInputs label > span { font-size: 11px; }
+.dimensionInputs label > div { display: flex; align-items: baseline; gap: 4px; }
+.dimensionInputs small { color: #888; font-size: 10px; text-transform: uppercase; }
 .dimensionRow { display: flex; width: 100%; align-items: center; gap: 10px; }
 .dimensionRow > span { flex: 1; font-weight: 600; }
 .dimensions label {
@@ -72,11 +88,13 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
   border-radius: var(--radius-md); background: rgba(179, 179, 179, .18);
   color: #888; font-size: 14px; font-weight: 600;
 }
-.dimensions input { width: 38px; padding: 0; border: 0; color: white; background: transparent; font-weight: 600; text-align: center; }
+.dimensions input { width: 48px; padding: 0; border: 0; color: white; background: transparent; font-weight: 600; text-align: center; }
 .referenceRow { padding-top: 8px; border-top: 1px solid var(--line); }
-.referenceRow > span { font-size: 13px; }
+.referenceRow > span { flex: 1; font-size: 12px; }
 .referenceRow select { min-width: 86px; padding: 8px 6px; border: 0; border-radius: var(--radius-md); color: white; background: rgba(179,179,179,.18); font-size: 12px; font-weight: 600; }
 .dimensions > small { color: var(--muted); font-size: 11px; line-height: 1.35; }
+.measurementStatus { display: block; padding: 7px 9px; border-radius: 9px; background: rgba(255,255,255,.055); }
+.measurementStatus.ready { color: #a9efc6; background: rgba(31,173,96,.12); }
 .predictionNotice { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border: 1px solid rgba(0,115,255,.48); border-radius: 12px; color: #c9ddf7; background: rgba(0,115,255,.12); font-size: 11px; line-height: 1.3; }
 .predictionNotice span { display: flex; min-width: 0; flex: 1; flex-direction: column; }
 .predictionNotice strong { color: white; }
@@ -90,15 +108,14 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .referenceEditor small { grid-column: 1 / -1; color: #b8cce5; font-size: 10px; line-height: 1.3; }
 
 .catalog { min-height: 0; display: flex; flex: 1; flex-direction: column; }
-.catalogHeading { display: flex; align-items: center; gap: 20px; padding: 18px 20px 14px; }
-.catalogHeading img { width: 36px; height: 36px; }
-.catalogHeading h2 { margin: 0; font-size: 18px; line-height: 1.2; }
-.categoryTabs { display: flex; gap: 8px; padding: 0 20px; overflow-x: auto; scrollbar-width: none; }
+.catalogHeading { display: flex; align-items: center; gap: 10px; padding: 13px 20px 10px; }
+.catalogHeading h2 { margin: 0; font-size: 16px; line-height: 1.2; }
+.categoryTabs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; padding: 0 20px 10px; }
 .categoryTabs button {
-  flex: 0 0 auto; padding: 8px; border: 0; border-radius: 10px 10px 0 0;
-  color: var(--text); background: rgba(255,255,255,.12); cursor: pointer;
+  min-width: 0; padding: 8px 5px; overflow: hidden; border: 1px solid transparent; border-radius: 9px;
+  color: #bbb; background: rgba(255,255,255,.075); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; cursor: pointer;
 }
-.categoryTabs button.active { background: rgba(255,255,255,.34); }
+.categoryTabs button.active { border-color: rgba(74,158,255,.65); color: white; background: rgba(0,115,255,.2); }
 .productGrid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
   min-height: 0; flex: 1; align-content: start; padding: 12px 20px 100px;
@@ -114,6 +131,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .productCard.selected::after { content: "✓"; position: absolute; z-index: 2; top: 13px; right: 13px; display: grid; width: 23px; height: 23px; place-items: center; border: 2px solid white; border-radius: 50%; color: white; background: var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,.4); font-size: 12px; }
 .productCard strong, .productCard span { font-size: 14px; }
 .productCard small { color: #bbb; line-height: 1.25; }
+.productCard > small { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .productImage { display: block; width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: var(--radius-sm); }
 .productImage img { width: 100%; height: 100%; padding: 5px; object-fit: contain; }
 
@@ -132,6 +150,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .stageEmpty, .dotPattern { position: absolute; inset: 0; }
 .dotPattern { display: block; width: 100%; height: 100%; pointer-events: none; }
 .stageCameraButton { position: absolute; top: calc(50% - 39px); left: calc(50% + 187px); translate: -50% -50%; display: flex; align-items: center; gap: 12px; padding: 16px 20px; border: 1px solid var(--line); border-radius: var(--radius-md); color: white; background: rgba(15,15,15,.8); cursor: pointer; }
+.stageGuide { position: absolute; z-index: 3; top: 76px; left: calc(50% + 187px); translate: -50%; margin: 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; color: #ddd; background: rgba(15,15,15,.68); backdrop-filter: blur(20px); font-size: 12px; white-space: nowrap; pointer-events: none; }
 
 .measurementOverlay, .measurementLines, .perspectiveAssetLayer { position: absolute; inset: 0; width: 100%; height: 100%; }
 .measurementOverlay { z-index: 2; touch-action: none; }
@@ -201,7 +220,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .summaryBar { position: absolute; left: 375px; right: 0; bottom: 0; height: 78px; z-index: 10; display: flex; align-items: center; min-width: 0; background: var(--panel); backdrop-filter: blur(32px); border-top: 1px solid var(--line); }
 .selectionSummary { display: flex; min-width: 0; flex: 1; align-items: center; gap: 20px; padding: 12px 20px; }
 .selectionSummary > span, .total > span { font-size: 14px; font-weight: 600; }
-.selectionSummary > span { display: flex; flex-direction: column; white-space: nowrap; }
+.selectionSummary > span { display: flex; max-width: 190px; flex-direction: column; white-space: nowrap; }
+.selectionSummary > span strong { max-width: 190px; overflow: hidden; color: white; font-size: 13px; text-overflow: ellipsis; }
 .selectionSummary > span small { color: var(--muted); font-size: 10px; font-weight: 400; }
 .selectionItems { display: flex; min-width: 0; gap: 10px; overflow-x: auto; }
 .selectionItems small { color: var(--muted); }
@@ -264,7 +284,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
   .sidePanel {
     position: fixed; inset: auto 0 0; z-index: 50; width: 100%; height: min(82dvh, 720px); transform: translateY(105%);
     visibility: hidden; pointer-events: none; opacity: 0;
-    background: rgba(15,15,15,.86); backdrop-filter: blur(32px); border: 1px solid var(--line); border-radius: 24px 24px 0 0; transition: transform .25s ease, opacity .2s ease, visibility 0s linear .25s; box-shadow: 0 -20px 60px rgba(0,0,0,.45);
+    background: rgba(15,15,15,.96); backdrop-filter: blur(32px); border: 1px solid var(--line); border-radius: 24px 24px 0 0; transition: transform .25s ease, opacity .2s ease, visibility 0s linear .25s; box-shadow: 0 -20px 60px rgba(0,0,0,.45);
   }
   .sidePanel.mobileOpen { visibility: visible; pointer-events: auto; opacity: 1; transform: translateY(0); transition-delay: 0s; }
   .brand { min-height: 78px; padding: 14px 20px; }
@@ -289,6 +309,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
   .floatingTools button { width: 34px; height: 34px; }
   .zoomStatus { right: 13px; top: auto; bottom: 64px; }
   .modePill { top: calc(12px + env(safe-area-inset-top)); left: 50%; }
+  .stageGuide { top: calc(70px + env(safe-area-inset-top)); left: 50%; max-width: calc(100vw - 24px); text-align: center; white-space: normal; }
   .gizmoToolbar { top: auto; bottom: calc(92px + env(safe-area-inset-bottom)); left: 50%; }
   .gizmoHint { display: none; }
   .stageCameraButton span { display: none; }

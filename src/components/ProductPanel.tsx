@@ -19,8 +19,8 @@ export function ProductPanel({ activeCategory, selectedItems, onCategoryChange, 
   return (
     <section className="catalog" aria-labelledby="catalog-title">
       <div className="catalogHeading">
-        <img src="/assets/shades.svg" alt="" width="36" height="36" />
-        <h2 id="catalog-title">Selecciona las piezas de tu cortina</h2>
+        <span>2</span>
+        <div><h2 id="catalog-title">Personaliza tu cortina</h2><p>Elige una opción de cada categoría</p></div>
       </div>
       <div className="categoryTabs" role="tablist" aria-label="Categorías de productos">
         {categories.sort((a, b) => a.order - b.order).map((category) => (
