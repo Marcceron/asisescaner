@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { MaterialIcon } from "./MaterialIcon";
 import { detectDepthCapability, type DepthCapability } from "@/services/vision/depth-capabilities";
 
 type ZoomRange = { min: number; max: number; step: number };
@@ -191,7 +192,7 @@ export function CameraCapture({ open, onClose, onCapture }: Props) {
           <video ref={videoRef} playsInline muted aria-label="Vista previa de la cámara" />
           {status !== "ready" && (
             <div className="cameraEmpty">
-              <img src="/assets/camera.svg" alt="" width="36" height="36" />
+              <MaterialIcon name="photo_camera" />
               <p>Coloca la ventana completa dentro del encuadre y evita reflejos fuertes.</p>
             </div>
           )}

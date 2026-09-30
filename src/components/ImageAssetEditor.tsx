@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { MaterialIcon } from "./MaterialIcon";
 import type { Point, Product } from "@/domain/types";
 import { useConfiguratorStore, type AssetTransform } from "@/store/configurator-store";
 import type { RodEditorProps } from "./Rod3DEditor";
@@ -207,6 +208,6 @@ export function ImageAssetEditor({ layerOrder, polygon, rod, curtain, bracket, f
 
   const selectedKind = selectedPart === "hook" || selectedPart === "wand" || selectedPart === "cord" ? selectedPart : selectedPart === "curtain" ? "curtain" : selectedPart === "tube" ? "rod" : selectedPart.startsWith("bracket") ? "bracket" : "finial";
   const deleteSelected = { hook: onDeleteHook, wand: onDeleteWand, cord: onDeleteCord, curtain: onDeleteCurtain, rod: onDeleteRod, bracket: onDeleteBracket, finial: onDeleteFinial }[selectedKind];
-  const controls = <><div className="gizmoToolbar" aria-label="Controladores de imagen"><select aria-label="Componente" value={selectedPart} onChange={(event) => { const part = event.target.value as PartId; selectedRef.current = part; setSelectedPart(part); }}>{availableParts.map((part) => <option key={part} value={part}>{labels[part]}</option>)}</select><button className="active">Mover</button><button className="danger" onClick={deleteSelected}><img src="/assets/delete.svg" alt="" />Eliminar</button></div><span className="gizmoHint">Moviendo: {labels[selectedPart]} · arrastra el asset para cambiarlo de lugar</span></>;
+  const controls = <><div className="gizmoToolbar" aria-label="Controladores de imagen"><select aria-label="Componente" value={selectedPart} onChange={(event) => { const part = event.target.value as PartId; selectedRef.current = part; setSelectedPart(part); }}>{availableParts.map((part) => <option key={part} value={part}>{labels[part]}</option>)}</select><button className="active"><MaterialIcon name="open_with" />Mover</button><button className="danger" onClick={deleteSelected}><MaterialIcon name="delete" />Eliminar</button></div><span className="gizmoHint">Moviendo: {labels[selectedPart]} · arrastra el asset para cambiarlo de lugar</span></>;
   return <div className="imageAssetEditor"><canvas ref={canvasRef} className="asset2dCanvas" data-ready={ready ? "true" : "false"} aria-label="Editor de imágenes de productos" />{canUsePortal && createPortal(controls, document.body)}</div>;
 }

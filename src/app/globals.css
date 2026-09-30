@@ -27,6 +27,15 @@ body {
 }
 
 button, input, textarea { font: inherit; }
+.materialIcon {
+  display: inline-block;
+  flex: 0 0 auto;
+  font-size: 24px;
+  font-variation-settings: "FILL" 0, "wght" 500, "GRAD" 0, "opsz" 24;
+  line-height: 1;
+  user-select: none;
+}
+.materialIcon.filled { font-variation-settings: "FILL" 1, "wght" 500, "GRAD" 0, "opsz" 24; }
 button, strong, b, h1, h2, h3, h4, h5, h6 { font-weight: 600; }
 button, label[for], .secondaryButton { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, input:focus-visible, textarea:focus-visible, label.secondaryButton:focus-within {
@@ -72,7 +81,6 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
   border-bottom: 1px solid var(--line);
 }
 .panelSectionHeading { display: flex; align-items: center; gap: 9px; }
-.panelSectionHeading > span, .catalogHeading > span { display: grid; flex: 0 0 auto; width: 28px; height: 28px; place-items: center; border-radius: 50%; color: white; background: var(--blue); font-size: 12px; font-weight: 600; }
 .panelSectionHeading > div, .catalogHeading > div { display: flex; min-width: 0; flex-direction: column; gap: 2px; }
 .panelSectionHeading strong { font-size: 15px; }
 .panelSectionHeading small, .catalogHeading p { margin: 0; color: var(--muted); font-size: 10px; line-height: 1.25; }
@@ -118,7 +126,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .categoryTabs button.active { border-color: rgba(74,158,255,.65); color: white; background: rgba(0,115,255,.2); }
 .productGrid {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px;
-  min-height: 0; flex: 1; align-content: start; padding: 12px 20px 100px;
+  min-height: 0; flex: 1; align-content: start; padding: 12px 20px 24px;
   overflow-y: auto; background: rgba(0,0,0,.18);
 }
 .productCard {
@@ -128,17 +136,14 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 }
 .productCard:hover { transform: translateY(-1px); background: rgba(255,255,255,.07); }
 .productCard.selected { border-color: var(--blue); background: rgba(0,115,255,.12); box-shadow: 0 0 0 1px rgba(0,115,255,.22), 0 8px 24px rgba(0,0,0,.18); }
-.productCard.selected::after { content: "✓"; position: absolute; z-index: 2; top: 13px; right: 13px; display: grid; width: 23px; height: 23px; place-items: center; border: 2px solid white; border-radius: 50%; color: white; background: var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,.4); font-size: 12px; }
+.productCard.selected::after { content: "check"; position: absolute; z-index: 2; top: 13px; right: 13px; display: grid; width: 23px; height: 23px; place-items: center; border: 2px solid white; border-radius: 50%; color: white; background: var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,.4); font-family: "Material Symbols Rounded"; font-size: 15px; font-variation-settings: "FILL" 0, "wght" 700, "GRAD" 0, "opsz" 20; }
 .productCard strong, .productCard span { font-size: 14px; }
-.productCard small { color: #bbb; line-height: 1.25; }
-.productCard > small { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .productImage { display: block; width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: var(--radius-sm); }
 .productImage img { width: 100%; height: 100%; padding: 5px; object-fit: contain; }
 
 .emptyPrompt { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 18px; padding: 34px; text-align: center; }
+.emptyPrompt .materialIcon { font-size: 36px; }
 .emptyPrompt p { max-width: 245px; margin: 0; font-size: 18px; font-weight: 600; }
-.sideAction { position: absolute; bottom: 12px; left: 20px; right: 20px; z-index: 4; }
-.sideAction .primaryButton { width: 100%; }
 
 .visualStage { position: absolute; inset: 0; min-width: 0; min-height: 0; overflow: hidden; background-color: #1d1d1d; background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px); background-size: 24px 24px; }
 .imagePlaneHost { position: absolute; inset: 0; overflow: hidden; }
@@ -150,6 +155,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .stageEmpty, .dotPattern { position: absolute; inset: 0; }
 .dotPattern { display: block; width: 100%; height: 100%; pointer-events: none; }
 .stageCameraButton { position: absolute; top: calc(50% - 39px); left: calc(50% + 187px); translate: -50% -50%; display: flex; align-items: center; gap: 12px; padding: 16px 20px; border: 1px solid var(--line); border-radius: var(--radius-md); color: white; background: rgba(15,15,15,.8); cursor: pointer; }
+.stageCameraButton .materialIcon { font-size: 30px; }
 .stageGuide { position: absolute; z-index: 3; top: 76px; left: calc(50% + 187px); translate: -50%; margin: 0; padding: 8px 12px; border: 1px solid var(--line); border-radius: 999px; color: #ddd; background: rgba(15,15,15,.68); backdrop-filter: blur(20px); font-size: 12px; white-space: nowrap; pointer-events: none; }
 
 .measurementOverlay, .measurementLines, .perspectiveAssetLayer { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -163,7 +169,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .measurementNode:focus-visible > span { box-shadow: 0 0 0 4px #ffdb4d; }
 .measureLabel { position: absolute; z-index: 4; translate: -50% -50%; padding: 8px 14px; border-radius: 999px; color: #101010; background: white; box-shadow: 0 2px 8px rgba(0,0,0,.12); font-size: 14px; font-weight: 600; line-height: 1; white-space: nowrap; transform-origin: center; pointer-events: none; }
 .measurementEditBadge { position: absolute; z-index: 4; display: grid; width: 34px; height: 34px; translate: 23px 21px; place-items: center; border-radius: 7px; background: var(--blue); pointer-events: none; }
-.measurementEditBadge img { width: 17px; height: 17px; }
+.measurementEditBadge .materialIcon { font-size: 18px; }
 .standardReferenceBox { position: absolute; z-index: 5; min-width: 15px; min-height: 15px; border: 2px dashed #25adff; border-radius: 4px; background: rgba(0,115,255,.08); cursor: move; touch-action: none; }
 .standardReferenceBox span { position: absolute; left: 50%; bottom: calc(100% + 6px); translate: -50%; padding: 5px 8px; border-radius: 8px; color: white; background: rgba(0,96,214,.92); font-size: 11px; font-weight: 600; white-space: nowrap; }
 .referenceHandle { position: absolute; width: 16px; height: 16px; padding: 0; border: 2px solid white; border-radius: 50%; background: #079cf1; box-shadow: 0 2px 6px rgba(0,0,0,.3); touch-action: none; }
@@ -195,26 +201,24 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 }
 .dimensions select:focus, .referenceEditor select:focus, .gizmoToolbar select:focus, .adminCard select:focus { border-color: rgba(74,158,255,.9); outline: 2px solid rgba(74,158,255,.32); outline-offset: 1px; }
 .dimensions select option, .referenceEditor select option, .gizmoToolbar select option, .adminCard select option { color: white; background: #242424; }
-.gizmoToolbar button { min-height: 36px; padding: 8px 11px; border: 0; border-radius: 10px; color: white; background: transparent; cursor: pointer; }
+.gizmoToolbar button { display: inline-flex; min-height: 36px; align-items: center; gap: 6px; padding: 8px 11px; border: 0; border-radius: 10px; color: white; background: transparent; cursor: pointer; }
 .gizmoToolbar button.active { background: var(--blue); }
-.gizmoToolbar button.danger { display: flex; align-items: center; gap: 6px; color: #ff9b9d; }
+.gizmoToolbar button.danger { color: #ff9b9d; }
 .gizmoToolbar button.danger:hover { background: rgba(255,52,56,.16); }
-.gizmoToolbar button.danger img { width: 16px; height: 16px; }
+.gizmoToolbar .materialIcon { font-size: 18px; }
 .gizmoHint { top: auto; bottom: 148px; padding: 7px 11px; border-radius: 10px; color: #ddd; font-size: 12px; white-space: nowrap; }
 
 .modePill, .floatingTools { position: absolute; z-index: 3; display: flex; align-items: center; background: rgba(15,15,15,.72); backdrop-filter: blur(20px); border-radius: var(--radius-lg); box-shadow: 0 8px 30px rgba(0,0,0,.2); }
 .modePill { top: 20px; left: calc(50% + 187px); translate: -50%; gap: 6px; padding: 5px 6px 5px 14px; font-size: 14px; font-weight: 600; }
 .modePill button { display: grid; width: 38px; height: 38px; padding: 0; place-items: center; border: 0; border-radius: 11px; background: transparent; cursor: pointer; }
 .modePill button.active { background: var(--blue); }
-.modePill img { object-fit: contain; }
-.modePill button:not(.active) img { filter: grayscale(1); opacity: .7; }
+.modePill .materialIcon { font-size: 22px; color: white; }
+.modePill button:not(.active) .materialIcon { opacity: .62; }
 .floatingTools { right: 22px; top: 50%; translate: 0 -50%; flex-direction: column; gap: 8px; padding: 5px; }
 .floatingTools button { display: grid; width: 38px; height: 38px; padding: 0; place-items: center; border: 0; border-radius: 11px; color: white; background: rgba(179,179,179,.18); cursor: pointer; }
 .floatingTools button:disabled { opacity: .35; cursor: not-allowed; }
 .floatingTools button[aria-pressed="true"] { background: var(--blue); }
-.floatingTools img { width: 24px; height: 24px; object-fit: contain; }
-.floatingTools .historyButton span { font-size: 25px; font-weight: 400; line-height: 1; translate: 0 -1px; }
-.zoomTool span { font-size: 26px; font-weight: 400; line-height: 1; translate: 0 -1px; }
+.floatingTools .materialIcon { font-size: 23px; }
 .zoomStatus { position: absolute; z-index: 3; right: 23px; top: calc(50% + 129px); min-width: 40px; padding: 5px 7px; border-radius: 8px; color: #ddd; background: rgba(15,15,15,.72); backdrop-filter: blur(20px); font-size: 11px; text-align: center; }
 
 .summaryBar { position: absolute; left: 375px; right: 0; bottom: 0; height: 78px; z-index: 10; display: flex; align-items: center; min-width: 0; background: var(--panel); backdrop-filter: blur(32px); border-top: 1px solid var(--line); }
@@ -232,7 +236,8 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
 .selectionThumbnail:hover { box-shadow: 0 0 0 2px rgba(255,255,255,.28); }
 .selectionThumbnail.selected { box-shadow: 0 0 0 3px var(--blue), 0 5px 16px rgba(0,115,255,.32); transform: translateY(-2px); }
 .selectionThumbnail > img { width: 100%; height: 100%; border-radius: inherit; object-fit: cover; }
-.selectionThumbnail > button { position: absolute; top: 2px; right: 2px; display: grid; width: 16px; height: 16px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: white; background: var(--danger); box-shadow: 0 1px 4px rgba(0,0,0,.45); font-size: 12px; line-height: 1; cursor: pointer; }
+.selectionThumbnail > button { position: absolute; top: 2px; right: 2px; display: grid; width: 17px; height: 17px; padding: 0; place-items: center; border: 0; border-radius: 50%; color: white; background: var(--danger); box-shadow: 0 1px 4px rgba(0,0,0,.45); line-height: 1; cursor: pointer; }
+.selectionThumbnail > button .materialIcon, .layerControls .materialIcon { font-size: 12px; }
 .layerControls { position: absolute; left: 2px; right: 2px; bottom: 2px; display: flex; justify-content: space-between; opacity: 0; transition: opacity .15s; }
 .selectionThumbnail:hover .layerControls, .selectionThumbnail:focus-within .layerControls, .selectionThumbnail.selected .layerControls { opacity: 1; }
 .layerControls button { display: grid; width: 16px; height: 16px; padding: 0; place-items: center; border: 0; border-radius: 5px; color: white; background: rgba(15,15,15,.84); font-size: 11px; line-height: 1; cursor: pointer; }
@@ -295,8 +300,7 @@ button:focus-visible, input:focus-visible, textarea:focus-visible, label.seconda
   .dimensions { padding-block: 9px; }
   .catalogHeading { padding-block: 12px; }
   .catalogHeading h2 { font-size: 16px; }
-  .productGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-bottom: 84px; }
-  .sideAction { display: none; }
+  .productGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); padding-bottom: 24px; }
   .summaryBar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; height: calc(76px + env(safe-area-inset-bottom)); padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); gap: 8px; }
   .mobileCatalogButton { display: block; min-height: 48px; padding: 10px 12px; border: 1px solid var(--line); border-radius: var(--radius-md); color: white; background: rgba(255,255,255,.1); font-weight: 600; }
   .selectionSummary { display: none; }

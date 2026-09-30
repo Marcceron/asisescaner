@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
+import { MaterialIcon } from "./MaterialIcon";
 import type { Object3D } from "three";
 import type { Point, Product } from "@/domain/types";
 import { projectIntoQuadrilateral } from "@/services/visualization/perspective";
@@ -294,10 +295,10 @@ export function Rod3DEditor({ imageData, layerOrder, polygon, rod, curtain, brac
   const controlsOverlay = <>
     <div className="gizmoToolbar" aria-label="Controladores 3D">
       <select aria-label="Componente 3D" value={selectedPart} onChange={(event) => { const part = event.target.value as PartId; setSelectedPart(part); selectPartRef.current(part); }}>{availableParts.map((part) => <option key={part} value={part}>{labels[part]}</option>)}</select>
-      <button className={mode === "translate" ? "active" : ""} onClick={() => setMode("translate")} aria-label={`Mover ${labels[selectedPart]}`}>Mover</button>
-      <button className={mode === "rotate" ? "active" : ""} onClick={() => setMode("rotate")} aria-label={`Rotar ${labels[selectedPart]}`}>Rotar</button>
-      <button className={mode === "scale" ? "active" : ""} onClick={() => setMode("scale")} aria-label={`Escalar ${labels[selectedPart]}`}>Escala</button>
-      <button className="danger" onClick={deleteSelected} aria-label={`Eliminar ${selectedProductName}`}><img src="/assets/delete.svg" alt="" />Eliminar</button>
+      <button className={mode === "translate" ? "active" : ""} onClick={() => setMode("translate")} aria-label={`Mover ${labels[selectedPart]}`}><MaterialIcon name="open_with" />Mover</button>
+      <button className={mode === "rotate" ? "active" : ""} onClick={() => setMode("rotate")} aria-label={`Rotar ${labels[selectedPart]}`}><MaterialIcon name="rotate_right" />Rotar</button>
+      <button className={mode === "scale" ? "active" : ""} onClick={() => setMode("scale")} aria-label={`Escalar ${labels[selectedPart]}`}><MaterialIcon name="open_in_full" />Escala</button>
+      <button className="danger" onClick={deleteSelected} aria-label={`Eliminar ${selectedProductName}`}><MaterialIcon name="delete" />Eliminar</button>
     </div>
     <span className="gizmoHint">Editando: {labels[selectedPart]} · selecciona otra pieza en la imagen o en el menú</span>
   </>;

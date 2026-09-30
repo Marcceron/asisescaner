@@ -18,6 +18,7 @@ import { ProductPanel } from "./ProductPanel";
 import { QuoteDialog } from "./QuoteDialog";
 import { captureConfiguredSceneJpeg } from "@/services/quotation/capture-scene";
 import { ReferenceOverlay } from "./ReferenceOverlay";
+import { MaterialIcon } from "./MaterialIcon";
 
 export function AppShell() {
   const store = useConfiguratorStore();
@@ -156,11 +157,14 @@ export function AppShell() {
     if (workspaceMode !== "editing") {
       setWorkspaceMode("editing");
     }
+    let renderersReady = selectedProducts.length === 0;
     for (let attempt = 0; attempt < 120; attempt += 1) {
-      const renderer = document.querySelector<HTMLCanvasElement>(".asset2dCanvas, .rod3dCanvas");
-      if (renderer && renderer.width > 1 && renderer.height > 1 && renderer.dataset.ready !== "false") break;
+      const renderers = [...document.querySelectorAll<HTMLCanvasElement>(".asset2dCanvas, .rod3dCanvas")];
+      renderersReady = renderers.length > 0 && renderers.every((renderer) => renderer.width > 1 && renderer.height > 1 && renderer.dataset.ready !== "false");
+      if (renderersReady) break;
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     }
+    if (!renderersReady) throw new Error("No se pudo preparar la vista con los productos seleccionados.");
     await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
     return captureConfiguredSceneJpeg();
   }
@@ -171,7 +175,7 @@ export function AppShell() {
         <header className="brand">
           <img src="/assets/logo.svg" alt="" width="70" height="44" />
           <div><span>Asis Escáner</span><strong>Diseña tu propia cortina</strong></div>
-          <button className="mobileClose" onClick={() => setMobilePanelOpen(false)} aria-label="Cerrar catálogo">×</button>
+          <button className="mobileClose" onClick={() => setMobilePanelOpen(false)} aria-label="Cerrar catálogo"><MaterialIcon name="close" /></button>
         </header>
 
         <nav className="workflowSteps" aria-label="Pasos del configurador">
@@ -181,12 +185,12 @@ export function AppShell() {
         </nav>
 
         <section className="dimensions" aria-labelledby="dimensions-title">
-          <div className="panelSectionHeading"><span>1</span><div><strong id="dimensions-title">Mide tu ventana</strong><small>Ajusta los nodos y confirma una medida real</small></div></div>
+          <div className="panelSectionHeading"><div><strong id="dimensions-title">Mide tu ventana</strong><small>Ajusta los nodos y confirma una medida real</small></div></div>
           <div className="dimensionInputs">
             <label><span>Ancho</span><div><input aria-label="Ancho en centímetros" inputMode="decimal" value={store.measurement.widthCm || ""} placeholder="0" onChange={(e) => store.patchMeasurement({ widthCm: Number(e.target.value) || 0 })} /><small>cm</small></div></label>
             <label><span>Alto</span><div><input aria-label="Alto en centímetros" inputMode="decimal" value={store.measurement.heightCm || ""} placeholder="0" onChange={(e) => store.patchMeasurement({ heightCm: Number(e.target.value) || 0 })} /><small>cm</small></div></label>
           </div>
-          {store.imageData && !referencePrediction && <div className="dimensionRow referenceRow"><span>Calibrar con</span><select aria-label="Segmento de referencia" value={knownEdge} onChange={(event) => setKnownEdge(event.target.value as MeasurementEdge)}><option value="width">Ancho</option><option value="height">Alto</option></select><label><input aria-label="Medida real de referencia" inputMode="decimal" value={knownWidthCm} placeholder="Medida" onChange={(e) => setKnownWidthCm(e.target.value === "" ? "" : Number(e.target.value))} /> CM</label></div>}
+          {store.imageData && !referencePrediction && <div className="dimensionRow referenceRow"><span>Medida conocida</span><select aria-label="Segmento de referencia" value={knownEdge} onChange={(event) => setKnownEdge(event.target.value as MeasurementEdge)}><option value="width">Ancho</option><option value="height">Alto</option></select><label><input aria-label="Medida real de referencia" inputMode="decimal" value={knownWidthCm} placeholder="Medida" onChange={(e) => setKnownWidthCm(e.target.value === "" ? "" : Number(e.target.value))} /> CM</label></div>}
           {store.imageData && !referencePrediction && <button className="addReferenceButton" onClick={addManualReference}>+ Usar un objeto de referencia</button>}
           {referencePrediction && <div className="referenceEditor"><div><strong>{referencePrediction.detected ? "Referencia detectada" : "Referencia manual"}</strong><button onClick={() => { setReferencePrediction(null); setKnownWidthCm(""); }}>Quitar</button></div><label>Objeto<select aria-label="Tipo de referencia" value={referencePrediction.object} onChange={(event) => { const object = event.target.value as ReferenceKind; const preset = referencePresets[object]; setReferencePrediction((current) => current && ({ ...current, object, label: preset.label, referenceHeightCm: preset.heightCm, detected: false, confidence: .85 })); }}><option value="switch-plate">Apagador / contacto</option><option value="cup">Taza</option><option value="bottle">Botella</option><option value="custom">Otro objeto</option></select></label><label>Alto real<input aria-label="Altura real del objeto" type="number" min="1" max="200" step="0.1" value={referencePrediction.referenceHeightCm} onChange={(event) => setReferencePrediction((current) => current && ({ ...current, referenceHeightCm: Number(event.target.value) || 1, detected: false, confidence: .95 }))} /> CM</label><small>Arrastra el recuadro y sus nodos hasta cubrir exactamente el objeto.</small></div>}
           {store.imageData && <small className={store.measurement.calibrated ? "measurementStatus ready" : "measurementStatus"}>{store.measurement.calibrated ? `✓ Medición calculada · margen aproximado ±${store.measurement.errorMarginPercent}%` : "Indica una medida real para calcular el tamaño"}</small>}
@@ -205,16 +209,11 @@ export function AppShell() {
           </>
         ) : (
           <section className="emptyPrompt">
-            <img src="/assets/camera.svg" alt="" width="32" height="32" />
+            <MaterialIcon name="photo_camera" />
             <p>Toma una foto a una ventana para empezar a personalizar tu cortina</p>
           </section>
         )}
 
-        <div className="sideAction">
-          <button className="primaryButton" onClick={() => { if (store.imageData) { setMobilePanelOpen(false); setWorkspaceMode("editing"); } else setCameraOpen(true); }}>
-            {store.imageData ? "Ver diseño en la ventana →" : "Tomar una foto"}
-          </button>
-        </div>
       </aside>
 
       <section className="visualStage" aria-label="Vista de la habitación y la ventana">
@@ -227,19 +226,19 @@ export function AppShell() {
             </ImagePlane>
             <div className="modePill" aria-live="polite">
               <span>{isDetecting ? "Detectando ventana…" : workspaceMode === "measurement" ? "Medir ventana" : "Personalizar"}</span>
-              <button className={workspaceMode === "measurement" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("measurement"); }} aria-label="Modo Medición" aria-pressed={workspaceMode === "measurement"} title="Ajustar las cuatro esquinas y calcular medidas."><img src="/assets/resize.svg" alt="" width="24" height="24" /></button>
-              <button className={workspaceMode === "editing" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("editing"); }} aria-label="Modo Edición" aria-pressed={workspaceMode === "editing"} title="Colocar los assets sobre la ventana."><img src="/assets/edit.svg" alt="" width="18" height="18" /></button>
+              <button className={workspaceMode === "measurement" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("measurement"); }} aria-label="Modo Medición" aria-pressed={workspaceMode === "measurement"} title="Ajustar las cuatro esquinas y calcular medidas."><MaterialIcon name="aspect_ratio" /></button>
+              <button className={workspaceMode === "editing" ? "active" : ""} onClick={() => { setPanEnabled(false); setWorkspaceMode("editing"); }} aria-label="Modo Edición" aria-pressed={workspaceMode === "editing"} title="Colocar los assets sobre la ventana."><MaterialIcon name="edit" /></button>
             </div>
             <p className="stageGuide">{workspaceMode === "measurement" ? "Arrastra los 4 puntos hasta las esquinas de la ventana" : selectedProducts.length ? "Selecciona una pieza y arrástrala para acomodarla" : "Elige productos en el panel izquierdo para comenzar"}</p>
             <div className="floatingTools" aria-label="Herramientas">
-              <button onClick={() => setCameraOpen(true)} aria-label="Tomar otra fotografía"><img src="/assets/camera.svg" alt="" width="28" height="28" /></button>
-              <button onClick={() => { setPanEnabled(false); setWorkspaceMode("measurement"); }} aria-label="Ajustar medición" aria-pressed={!panEnabled && workspaceMode === "measurement"}><img src="/assets/cursor.svg" alt="" width="28" height="28" /></button>
-              <button onClick={() => setPanEnabled((value) => !value)} aria-label="Herramienta de mano para paneo" aria-pressed={panEnabled} title="Mover la mesa de trabajo"><img src="/assets/hand.svg" alt="" width="28" height="28" /></button>
-              <button className="historyButton" onClick={undoSelection} disabled={!store.selectionPast.length} aria-label="Deshacer" title="Deshacer (⌘/Ctrl+Z)"><span aria-hidden="true">↶</span></button>
-              <button className="historyButton" onClick={redoSelection} disabled={!store.selectionFuture.length} aria-label="Rehacer" title="Rehacer (⌘/Ctrl+Shift+Z)"><span aria-hidden="true">↷</span></button>
-              <button className="zoomTool" onClick={() => setViewZoom((value) => Math.max(.15, Math.round(value / 1.25 * 100) / 100))} aria-label="Alejar imagen" disabled={viewZoom <= .15} title="Alejar imagen"><span aria-hidden="true">−</span></button>
-              <button className="zoomTool" onClick={() => setViewZoom((value) => Math.min(6, Math.round(value * 1.25 * 100) / 100))} aria-label="Acercar imagen" disabled={viewZoom >= 6} title="Acercar imagen"><span aria-hidden="true">+</span></button>
-              <button onClick={store.resetProject} aria-label="Eliminar fotografía"><img src="/assets/delete.svg" alt="" width="28" height="28" /></button>
+              <button onClick={() => setCameraOpen(true)} aria-label="Tomar otra fotografía"><MaterialIcon name="add_a_photo" /></button>
+              <button onClick={() => { setPanEnabled(false); setWorkspaceMode("measurement"); }} aria-label="Ajustar medición" aria-pressed={!panEnabled && workspaceMode === "measurement"}><MaterialIcon name="near_me" filled /></button>
+              <button onClick={() => setPanEnabled((value) => !value)} aria-label="Herramienta de mano para paneo" aria-pressed={panEnabled} title="Mover la mesa de trabajo"><MaterialIcon name="pan_tool" filled /></button>
+              <button className="historyButton" onClick={undoSelection} disabled={!store.selectionPast.length} aria-label="Deshacer" title="Deshacer (⌘/Ctrl+Z)"><MaterialIcon name="undo" /></button>
+              <button className="historyButton" onClick={redoSelection} disabled={!store.selectionFuture.length} aria-label="Rehacer" title="Rehacer (⌘/Ctrl+Shift+Z)"><MaterialIcon name="redo" /></button>
+              <button className="zoomTool" onClick={() => setViewZoom((value) => Math.max(.15, Math.round(value / 1.25 * 100) / 100))} aria-label="Alejar imagen" disabled={viewZoom <= .15} title="Alejar imagen"><MaterialIcon name="zoom_out" /></button>
+              <button className="zoomTool" onClick={() => setViewZoom((value) => Math.min(6, Math.round(value * 1.25 * 100) / 100))} aria-label="Acercar imagen" disabled={viewZoom >= 6} title="Acercar imagen"><MaterialIcon name="zoom_in" /></button>
+              <button onClick={store.resetProject} aria-label="Eliminar fotografía"><MaterialIcon name="delete" /></button>
             </div>
             <output className="zoomStatus" aria-live="polite">{Math.round(viewZoom * 100)}%</output>
           </>
@@ -247,7 +246,7 @@ export function AppShell() {
           <div className="stageEmpty">
             <InteractiveDotField />
             <button className="stageCameraButton" onClick={() => setCameraOpen(true)} aria-label="Capturar una ventana">
-              <img src="/assets/camera.svg" alt="" width="32" height="32" />
+              <MaterialIcon name="add_a_photo" />
               <span>Capturar una ventana</span>
             </button>
           </div>
@@ -271,10 +270,10 @@ export function AppShell() {
                 onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedAssetId(product.id); setPanEnabled(false); setWorkspaceMode("editing"); return; } if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return; event.preventDefault(); const target = selectedProducts[index + (event.key === "ArrowLeft" ? -1 : 1)]; if (target) store.reorderSelectedItem(product.id, target.id); }}>
                 <img src={product.image} alt={product.name} />
                 <span className="layerControls">
-                  <button type="button" disabled={index === 0} onClick={(event) => { event.stopPropagation(); store.reorderSelectedItem(product.id, selectedProducts[0].id); }} aria-label={`Traer ${product.name} al frente`} title="Traer al frente">←</button>
-                  <button type="button" disabled={index === selectedProducts.length - 1} onClick={(event) => { event.stopPropagation(); store.reorderSelectedItem(product.id, selectedProducts.at(-1)!.id); }} aria-label={`Enviar ${product.name} atrás`} title="Enviar atrás">→</button>
+                  <button type="button" disabled={index === 0} onClick={(event) => { event.stopPropagation(); store.reorderSelectedItem(product.id, selectedProducts[0].id); }} aria-label={`Traer ${product.name} al frente`} title="Traer al frente"><MaterialIcon name="flip_to_front" /></button>
+                  <button type="button" disabled={index === selectedProducts.length - 1} onClick={(event) => { event.stopPropagation(); store.reorderSelectedItem(product.id, selectedProducts.at(-1)!.id); }} aria-label={`Enviar ${product.name} atrás`} title="Enviar atrás"><MaterialIcon name="flip_to_back" /></button>
                 </span>
-                <button onClick={(event) => { event.stopPropagation(); store.removeProduct(product.id); }} aria-label={`Quitar ${product.name}`}>×</button>
+                <button onClick={(event) => { event.stopPropagation(); store.removeProduct(product.id); }} aria-label={`Quitar ${product.name}`}><MaterialIcon name="close" /></button>
               </div>
             )) : <small>Sin piezas</small>}
           </div>

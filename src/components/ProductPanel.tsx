@@ -19,7 +19,6 @@ export function ProductPanel({ activeCategory, selectedItems, onCategoryChange, 
   return (
     <section className="catalog" aria-labelledby="catalog-title">
       <div className="catalogHeading">
-        <span>2</span>
         <div><h2 id="catalog-title">Personaliza tu cortina</h2><p>Elige una opción de cada categoría</p></div>
       </div>
       <div className="categoryTabs" role="tablist" aria-label="Categorías de productos">
@@ -42,6 +41,7 @@ export function ProductPanel({ activeCategory, selectedItems, onCategoryChange, 
             <button
               key={product.id}
               className={`productCard ${selected ? "selected" : ""}`}
+              title={product.description}
               aria-pressed={selected}
               onClick={() => onToggle(product.id, product.category)}
             >
@@ -49,7 +49,6 @@ export function ProductPanel({ activeCategory, selectedItems, onCategoryChange, 
                 <img src={product.image} alt="" />
               </span>
               <strong>{product.name}</strong>
-              <small>{product.description}</small>
               <span>{formatMoney(product.priceCents)}</span>
             </button>
           );

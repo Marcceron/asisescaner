@@ -3,7 +3,7 @@ const nextPaint = () => new Promise<void>((resolve) => requestAnimationFrame(() 
 export async function captureConfiguredSceneJpeg() {
   const plane = document.querySelector<HTMLElement>(".imagePlane");
   const image = plane?.querySelector<HTMLImageElement>(".roomImage");
-  const renderer = plane?.querySelector<HTMLCanvasElement>(".asset2dCanvas, .rod3dCanvas");
+  const renderers = plane ? [...plane.querySelectorAll<HTMLCanvasElement>(".asset2dCanvas, .rod3dCanvas")] : [];
   if (!plane || !image || !image.complete) return null;
 
   const imageRect = image.getBoundingClientRect();
@@ -18,24 +18,26 @@ export async function captureConfiguredSceneJpeg() {
   if (!context) return null;
 
   context.drawImage(image, 0, 0, canvas.width, canvas.height);
-  if (renderer) {
+  if (renderers.length) {
     window.dispatchEvent(new CustomEvent("asis:quote-capture", { detail: true }));
     await nextPaint();
     try {
-      const rendererRect = renderer.getBoundingClientRect();
-      const scaleX = renderer.width / Math.max(1, rendererRect.width);
-      const scaleY = renderer.height / Math.max(1, rendererRect.height);
-      context.drawImage(
-        renderer,
-        (imageRect.left - rendererRect.left) * scaleX,
-        (imageRect.top - rendererRect.top) * scaleY,
-        imageRect.width * scaleX,
-        imageRect.height * scaleY,
-        0,
-        0,
-        canvas.width,
-        canvas.height,
-      );
+      for (const renderer of renderers) {
+        const rendererRect = renderer.getBoundingClientRect();
+        const scaleX = renderer.width / Math.max(1, rendererRect.width);
+        const scaleY = renderer.height / Math.max(1, rendererRect.height);
+        context.drawImage(
+          renderer,
+          (imageRect.left - rendererRect.left) * scaleX,
+          (imageRect.top - rendererRect.top) * scaleY,
+          imageRect.width * scaleX,
+          imageRect.height * scaleY,
+          0,
+          0,
+          canvas.width,
+          canvas.height,
+        );
+      }
     } finally {
       window.dispatchEvent(new CustomEvent("asis:quote-capture", { detail: false }));
     }

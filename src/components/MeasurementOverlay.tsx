@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import type { Point } from "@/domain/types";
+import { MaterialIcon } from "./MaterialIcon";
 
 type Props = {
   polygon: [Point, Point, Point, Point];
@@ -52,7 +53,7 @@ export function MeasurementOverlay({ polygon, widthCm, heightCm, aspectRatio, on
             event.preventDefault(); onPointChange(index, { x: clamp(next.x), y: clamp(next.y) });
           }}><span /></button>
       ))}
-      <span className="measurementEditBadge" style={{ left: `${polygon[1].x * 100}%`, top: `${polygon[1].y * 100}%` }} aria-hidden="true"><img src="/assets/edit.svg" alt="" /></span>
+      <span className="measurementEditBadge" style={{ left: `${polygon[1].x * 100}%`, top: `${polygon[1].y * 100}%` }} aria-hidden="true"><MaterialIcon name="edit" /></span>
     </div>
   );
 }
