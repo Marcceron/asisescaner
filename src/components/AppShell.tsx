@@ -174,7 +174,7 @@ export function AppShell() {
       <aside className={`sidePanel ${mobilePanelOpen ? "mobileOpen" : ""}`}>
         <header className="brand">
           <img src="/assets/logo.svg" alt="" width="70" height="44" />
-          <div><span>Asis Escáner</span><strong>Diseña tu propia cortina</strong></div>
+          <div><span>Assis Escáner</span><strong>Diseña tu propia cortina</strong></div>
           <button className="mobileClose" onClick={() => setMobilePanelOpen(false)} aria-label="Cerrar catálogo"><MaterialIcon name="close" /></button>
         </header>
 

@@ -4,7 +4,7 @@ import "material-symbols/rounded.css";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Asis Escáner",
+  title: "Assis Escáner",
   description: "Mide una ventana y personaliza tu cortina.",
 };
 
